@@ -8,7 +8,8 @@ namespace Webgame.Domain.Common;
 
 public abstract class Entity<TId>
 {
-    public TId Id { get; }
+    public TId Id { get; private set; } = default!;
+    protected Entity() { } // EF Core
 
     protected Entity(TId id)
     {
