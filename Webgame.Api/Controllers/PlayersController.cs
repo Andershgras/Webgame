@@ -43,5 +43,12 @@ public sealed class PlayersController : ControllerBase
         if (player is null) return NotFound();
         return Ok(ToResponse(player));
     }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete([FromRoute] Guid id, CancellationToken ct)
+    {
+        var deleted = await _service.DeletePlayerAsync(new PlayerId(id), ct);
+        return deleted ? NoContent() : NotFound();
+    }
 }
 

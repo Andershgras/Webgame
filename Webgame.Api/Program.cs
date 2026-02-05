@@ -3,6 +3,10 @@ using Webgame.Application.Players;
 using Webgame.Infrastructure.Players;
 using Microsoft.EntityFrameworkCore;
 using Webgame.Infrastructure.Persistence;
+using Webgame.Application.Persistence;
+using Webgame.Application.Players;
+using Webgame.Infrastructure.Persistence;
+using Webgame.Infrastructure.Players;
 
 namespace Webgame.Api
 {
@@ -28,6 +32,7 @@ namespace Webgame.Api
 
             // Infrastructure
             builder.Services.AddScoped<IPlayerRepository, EfPlayerRepository>();
+            builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 
             // Persistence
             builder.Services.AddDbContext<WebgameDbContext>(options =>

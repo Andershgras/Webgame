@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 using Microsoft.EntityFrameworkCore;
 using Webgame.Application.Players;
 using Webgame.Domain.Players;
@@ -22,18 +21,22 @@ public sealed class EfPlayerRepository : IPlayerRepository
 
     public async Task AddAsync(Player player, CancellationToken ct)
     {
-        // Hvis den ikke er tracked endnu, attach/add.
-        var exists = await _db.Players.AnyAsync(p => p.Id == player.Id, ct);
-
-        if (!exists)
-            _db.Players.Add(player);
-
-        await _db.SaveChangesAsync(ct);
+        await _db.Players.AddAsync(player, ct);
     }
 
     public Task<Player?> GetByIdAsync(PlayerId id, CancellationToken ct)
     {
+        // Tracked entity – ændringer bliver opdaget af EF (men vi kalder Update eksplicit for pædagogik nu)
         return _db.Players.FirstOrDefaultAsync(p => p.Id == id, ct);
     }
-}
 
+    public void Update(Player player)
+    {
+        _db.Players.Update(player);
+    }
+
+    public void Remove(Player player)
+    {
+        _db.Players.Remove(player);
+    }
+}
