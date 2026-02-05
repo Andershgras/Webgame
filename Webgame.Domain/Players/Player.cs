@@ -8,6 +8,7 @@ using Webgame.Domain.Common;
 namespace Webgame.Domain.Players;
 public sealed class Player : Entity<PlayerId>
 {
+    private Player() : base() { } // EF Core
     public string Name { get; private set; }
     public Stats Stats { get; private set; }
 

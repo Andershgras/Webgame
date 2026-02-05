@@ -1,6 +1,8 @@
 
 using Webgame.Application.Players;
 using Webgame.Infrastructure.Players;
+using Microsoft.EntityFrameworkCore;
+using Webgame.Infrastructure.Persistence;
 
 namespace Webgame.Api
 {
@@ -9,6 +11,10 @@ namespace Webgame.Api
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            // For debugging purposes, print the connection string (without the password) to the console.
+            var cs = builder.Configuration.GetConnectionString("WebgameDb");
+            Console.WriteLine("DB CS (sanitized): " + (cs is null ? "NULL" : cs.Split("Password=")[0]));
 
             // Add services to the container.
 
@@ -20,8 +26,12 @@ namespace Webgame.Api
             // Application
             builder.Services.AddScoped<PlayerService>();
 
-            // Infrastructure (midlertidigt)
-            builder.Services.AddSingleton<IPlayerRepository, InMemoryPlayerRepository>();
+            // Infrastructure
+            builder.Services.AddScoped<IPlayerRepository, EfPlayerRepository>();
+
+            // Persistence
+            builder.Services.AddDbContext<WebgameDbContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("WebgameDb")));
 
             var app = builder.Build();
 
