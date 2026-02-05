@@ -20,13 +20,14 @@ public sealed class Stats
         Coins += amount;
     }
 
-    public void SpendCoins(long amount)
+    public bool TrySpendCoins(long amount)
     {
-        if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
-        if (Coins < amount) throw new InvalidOperationException("Not enough coins.");
-        Coins -= amount;
-    }
+        if (amount < 0) return false;
+        if (Coins < amount) return false;
 
+        Coins -= amount;
+        return true;
+    }
     public void IncreaseClickPower(int amount)
     {
         if (amount <= 0) throw new ArgumentOutOfRangeException(nameof(amount));

@@ -18,8 +18,6 @@ public sealed class Player : Entity<PlayerId>
         Stats = new Stats();
     }
 
-    public static Player CreateNew(string name) => new(PlayerId.New(), name);
-
     public void Rename(string newName)
     {
         Name = ValidateName(newName);
@@ -37,4 +35,26 @@ public sealed class Player : Entity<PlayerId>
     {
         Stats.AddCoins(Stats.ClickPower);
     }
+    public static bool TryCreate(string name, out Player? player)
+    {
+        name = (name ?? "").Trim();
+        if (name.Length is < 3 or > 20)
+        {
+            player = null;
+            return false;
+        }
+
+        player = new Player(PlayerId.New(), name);
+        return true;
+    }
+
+    public bool TryRename(string newName)
+    {
+        newName = (newName ?? "").Trim();
+        if (newName.Length is < 3 or > 20) return false;
+
+        Name = newName;
+        return true;
+    }
+
 }
