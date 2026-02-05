@@ -1,0 +1,39 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Webgame.Domain.Common;
+
+namespace Webgame.Domain.Players;
+public sealed class Player : Entity<PlayerId>
+{
+    public string Name { get; private set; }
+    public Stats Stats { get; private set; }
+
+    public Player(PlayerId id, string name) : base(id)
+    {
+        Name = ValidateName(name);
+        Stats = new Stats();
+    }
+
+    public static Player CreateNew(string name) => new(PlayerId.New(), name);
+
+    public void Rename(string newName)
+    {
+        Name = ValidateName(newName);
+    }
+
+    private static string ValidateName(string name)
+    {
+        name = (name ?? "").Trim();
+        if (name.Length is < 3 or > 20)
+            throw new ArgumentException("Name must be between 3 and 20 characters.", nameof(name));
+
+        return name;
+    }
+    public void Click()
+    {
+        Stats.AddCoins(Stats.ClickPower);
+    }
+}
