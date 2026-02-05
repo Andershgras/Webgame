@@ -6,6 +6,13 @@ using System.Threading.Tasks;
 
 namespace Webgame.Application.Common;
 
-public sealed record Error(string Code, string Message, ErrorType Type);
-
+public enum ErrorType
+{
+    Validation,
+    NotFound,
+    Conflict,
+    Unauthorized,
+    Forbidden,
+    Unexpected
+}
 
