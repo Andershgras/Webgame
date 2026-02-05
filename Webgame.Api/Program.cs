@@ -4,9 +4,8 @@ using Webgame.Infrastructure.Players;
 using Microsoft.EntityFrameworkCore;
 using Webgame.Infrastructure.Persistence;
 using Webgame.Application.Persistence;
-using Webgame.Application.Players;
-using Webgame.Infrastructure.Persistence;
-using Webgame.Infrastructure.Players;
+using Webgame.Api.Common;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace Webgame.Api
 {
@@ -20,8 +19,8 @@ namespace Webgame.Api
             var cs = builder.Configuration.GetConnectionString("WebgameDb");
             Console.WriteLine("DB CS (sanitized): " + (cs is null ? "NULL" : cs.Split("Password=")[0]));
 
-            // Add services to the container.
-
+            #region Services
+            
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -38,6 +37,11 @@ namespace Webgame.Api
             builder.Services.AddDbContext<WebgameDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("WebgameDb")));
 
+            // Common
+            builder.Services.AddProblemDetails();
+            builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+            #endregion
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -46,14 +50,11 @@ namespace Webgame.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseMiddleware<RequestLoggingMiddleware>();
+            app.UseExceptionHandler();
             app.UseHttpsRedirection();
-
             app.UseAuthorization();
-
-
             app.MapControllers();
-
             app.Run();
         }
     }

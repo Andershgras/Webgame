@@ -66,6 +66,5 @@ public sealed class PlayersController : ControllerBase
 
         return ResultToHttp.ToActionResult(this, result, () => NoContent());
     }
-
 }
 
