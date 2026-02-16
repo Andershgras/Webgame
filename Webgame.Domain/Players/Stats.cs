@@ -11,7 +11,6 @@ public sealed class Stats
     public Stats() { } // EF Core
     public int Level { get; private set; } = 1;
     public long Coins { get; private set; } = 0;
-
     public int ClickPower { get; private set; } = 1;
 
     public void AddCoins(long amount)
@@ -30,7 +29,7 @@ public sealed class Stats
     }
     public void IncreaseClickPower(int amount)
     {
-        if (amount <= 0) throw new ArgumentOutOfRangeException(nameof(amount));
+        if (amount <= 0) return;
         ClickPower += amount;
     }
 }

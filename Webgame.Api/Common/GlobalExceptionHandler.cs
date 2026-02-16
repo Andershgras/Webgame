@@ -22,7 +22,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
     {
         var traceId = httpContext.TraceIdentifier;
 
-        // 1️⃣ Client cancelled / request aborted → don't treat as error
+        // 1️. Client cancelled / request aborted → don't treat as error
         if (exception is OperationCanceledException)
         {
             _logger.LogInformation(
@@ -37,7 +37,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         string code;
         string message;
 
-        // 2️⃣ Known infrastructure exceptions
+        // 2️. Known infrastructure exceptions
         switch (exception)
         {
             case DbUpdateException:
