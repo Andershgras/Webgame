@@ -19,6 +19,10 @@ public static class Errors
 
     public static readonly Error NotEnoughCoins =
         new("game.not_enough_coins", "Not enough coins.", ErrorType.Conflict);
+
+    public static readonly Error InvalidTop =
+        new("leaderboard.invalid_top", "Parameter 'top' must be between 1 and 100.", ErrorType.Validation);
+
 }
 
 

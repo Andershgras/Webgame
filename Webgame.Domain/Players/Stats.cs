@@ -11,7 +11,6 @@ public sealed class Stats
     public Stats() { } // EF Core
     public int Level { get; private set; } = 1;
     public long Coins { get; private set; } = 0;
-
     public int ClickPower { get; private set; } = 1;
 
     public void AddCoins(long amount)
