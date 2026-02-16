@@ -1,13 +1,15 @@
 
-using Webgame.Application.Players;
-using Webgame.Infrastructure.Players;
-using Microsoft.EntityFrameworkCore;
-using Webgame.Infrastructure.Persistence;
-using Webgame.Application.Persistence;
-using Webgame.Api.Common;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using Webgame.Api.Common;
 using Webgame.Application.Leaderboards;
+using Webgame.Application.Persistence;
+using Webgame.Application.Players;
+using Webgame.Application.Upgrades;
 using Webgame.Infrastructure.Leaderboards;
+using Webgame.Infrastructure.Persistence;
+using Webgame.Infrastructure.Players;
+using Webgame.Infrastructure.Upgrades;
 
 namespace Webgame.Api
 {
@@ -46,6 +48,8 @@ namespace Webgame.Api
             // Leaderboard
             builder.Services.AddScoped<ILeaderboardQuery, EfLeaderboardQuery>();
 
+            // Upgrade Catalog
+            builder.Services.AddScoped<IUpgradeCatalogQuery, EfUpgradeCatalogQuery>();
             #endregion
             var app = builder.Build();
 

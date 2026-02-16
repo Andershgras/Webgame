@@ -12,6 +12,7 @@ public sealed class Stats
     public int Level { get; private set; } = 1;
     public long Coins { get; private set; } = 0;
     public int ClickPower { get; private set; } = 1;
+    public int ClickPowerLevel { get; private set; } = 1;
 
     public void AddCoins(long amount)
     {
@@ -27,10 +28,10 @@ public sealed class Stats
         Coins -= amount;
         return true;
     }
-    public void IncreaseClickPower(int amount)
+    public void UpgradeClickPower()
     {
-        if (amount <= 0) return;
-        ClickPower += amount;
+        ClickPowerLevel++;
+        ClickPower++;
     }
 }
 

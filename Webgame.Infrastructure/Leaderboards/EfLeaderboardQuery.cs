@@ -18,7 +18,7 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
     {
         _db = db;
     }
-
+    // Get top N players sorted by Level, then Coins, then ClickPower
     public async Task<Result<IReadOnlyList<LeaderboardEntry>>> GetTopAsync(int top, CancellationToken ct)
     {
         if (top is < 1 or > 100)

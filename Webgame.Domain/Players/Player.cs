@@ -56,18 +56,19 @@ public sealed class Player : Entity<PlayerId>
         Name = newName;
         return true;
     }
+    public long GetClickPowerUpgradeCost()
+    {
+        // Eksempel: 10, 20, 30, 40...
+        return 10L * Stats.ClickPowerLevel;
+    }
     public bool TryUpgradeClickPower(out long cost)
     {
-        // Pris skalerer med nuværende click power
-        // Eksempel: base 10, så 10, 20, 30, 40...
-        cost = 10L * Stats.ClickPower;
+        cost = GetClickPowerUpgradeCost();
 
-        // Payment
         if (!Stats.TrySpendCoins(cost))
             return false;
 
-        // Upgrade effect
-        Stats.IncreaseClickPower(1);
+        Stats.UpgradeClickPower();
         return true;
     }
 }

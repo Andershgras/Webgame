@@ -9,7 +9,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger;
     private readonly IHostEnvironment _env;
-
+    // This is a catch-all handler for unhandled exceptions. It should be registered last in the pipeline.
     public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, IHostEnvironment env)
     {
         _logger = logger;
