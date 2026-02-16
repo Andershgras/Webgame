@@ -6,6 +6,8 @@ using Webgame.Infrastructure.Persistence;
 using Webgame.Application.Persistence;
 using Webgame.Api.Common;
 using Microsoft.AspNetCore.Diagnostics;
+using Webgame.Application.Leaderboards;
+using Webgame.Infrastructure.Leaderboards;
 
 namespace Webgame.Api
 {
@@ -40,6 +42,9 @@ namespace Webgame.Api
             // Common
             builder.Services.AddProblemDetails();
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+            // Leaderboard
+            builder.Services.AddScoped<ILeaderboardQuery, EfLeaderboardQuery>();
 
             #endregion
             var app = builder.Build();
