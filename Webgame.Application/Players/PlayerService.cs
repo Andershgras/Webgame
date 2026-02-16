@@ -61,5 +61,18 @@ public sealed class PlayerService
 
         return Result.Ok();
     }
+    public async Task<Result<Player>> UpgradeClickPowerAsync(PlayerId id, CancellationToken ct)
+    {
+        var player = await _repo.GetByIdAsync(id, ct);
+        if (player is null) return Result<Player>.Fail(Errors.PlayerNotFound);
+
+        if (!player.TryUpgradeClickPower(out _))
+            return Result<Player>.Fail(Errors.NotEnoughCoins);
+
+        _repo.Update(player);
+        await _uow.SaveChangesAsync(ct);
+
+        return Result<Player>.Ok(player);
+    }
 }
 

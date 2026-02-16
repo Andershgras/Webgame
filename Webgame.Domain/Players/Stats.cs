@@ -29,7 +29,7 @@ public sealed class Stats
     }
     public void IncreaseClickPower(int amount)
     {
-        if (amount <= 0) throw new ArgumentOutOfRangeException(nameof(amount));
+        if (amount <= 0) return;
         ClickPower += amount;
     }
 }
