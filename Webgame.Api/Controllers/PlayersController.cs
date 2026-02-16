@@ -17,8 +17,14 @@ public sealed class PlayersController : ControllerBase
     }
 
     public sealed record CreatePlayerRequest(string Name);
-    public sealed record PlayerResponse(Guid Id, string Name, int Level, long Coins, int ClickPower);
-
+    public sealed record PlayerResponse(
+        Guid Id,
+        string Name,
+        int Level,
+        long Coins,
+        int ClickPower,
+        int ClickPowerLevel
+    );
     [HttpPost]
     public async Task<ActionResult<PlayerResponse>> Create([FromBody] CreatePlayerRequest request, CancellationToken ct)
     {
@@ -44,7 +50,14 @@ public sealed class PlayersController : ControllerBase
             dto => Ok(dto));
     }
     private static PlayerResponse ToResponse(Player p)
-        => new(p.Id.Value, p.Name, p.Stats.Level, p.Stats.Coins, p.Stats.ClickPower);
+        => new(
+            p.Id.Value,
+            p.Name,
+            p.Stats.Level,
+            p.Stats.Coins,
+            p.Stats.ClickPower,
+            p.Stats.ClickPowerLevel
+        );
 
     [HttpPost("{id:guid}/click")]
     public async Task<ActionResult<PlayerResponse>> Click([FromRoute] Guid id, CancellationToken ct)
