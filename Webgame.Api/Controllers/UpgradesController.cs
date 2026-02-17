@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Webgame.Api.Common;
+using Webgame.Application.Players;
 using Webgame.Application.Upgrades;
+using Webgame.Domain.Players;
 
 namespace Webgame.Api.Controllers;
 
@@ -9,10 +11,11 @@ namespace Webgame.Api.Controllers;
 public sealed class UpgradesController : ControllerBase
 {
     private readonly IUpgradeCatalogQuery _query;
-
-    public UpgradesController(IUpgradeCatalogQuery query)
+    private readonly PlayerService _players;
+    public UpgradesController(IUpgradeCatalogQuery query, PlayerService players)
     {
         _query = query;
+        _players = players;
     }
 
     [HttpGet]
@@ -26,6 +29,17 @@ public sealed class UpgradesController : ControllerBase
             this,
             result,
             x => x,
+            dto => Ok(dto));
+    }
+    [HttpPost("{key}/buy")]
+    public async Task<ActionResult<PlayersController.PlayerResponse>> Buy(Guid playerId, string key, CancellationToken ct)
+    {
+        var result = await _players.BuyUpgradeAsync(new Webgame.Domain.Players.PlayerId(playerId), key, ct);
+
+        return ResultToHttp.ToActionResult<Player, PlayersController.PlayerResponse>(
+            this,
+            result,
+            PlayerMappings.ToResponse,
             dto => Ok(dto));
     }
 }

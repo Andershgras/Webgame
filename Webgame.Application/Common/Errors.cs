@@ -23,6 +23,9 @@ public static class Errors
     public static readonly Error NotEnoughCoins =
         new("game.not_enough_coins", "Not enough coins.", ErrorType.Conflict);
 
+    public static readonly Error InvalidUpgradeKey =
+        new("upgrade.invalid_key", "Unknown upgrade key.", ErrorType.Validation);
+
 }
 
 

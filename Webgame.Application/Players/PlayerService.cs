@@ -61,12 +61,23 @@ public sealed class PlayerService
 
         return Result.Ok();
     }
-    public async Task<Result<Player>> UpgradeClickPowerAsync(PlayerId id, CancellationToken ct)
+    public async Task<Result<Player>> BuyUpgradeAsync(PlayerId id, string key, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
         if (player is null) return Result<Player>.Fail(Errors.PlayerNotFound);
 
-        if (!player.TryUpgradeClickPower(out _))
+        key = (key ?? "").Trim().ToLowerInvariant();
+
+        var success = key switch
+        {
+            "click_power" => player.TryUpgradeClickPower(out _),
+            _ => (bool?)null
+        };
+
+        if (success is null)
+            return Result<Player>.Fail(Errors.InvalidUpgradeKey);
+
+        if (success is false)
             return Result<Player>.Fail(Errors.NotEnoughCoins);
 
         _repo.Update(player);
