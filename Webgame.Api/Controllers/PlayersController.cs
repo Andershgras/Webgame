@@ -79,16 +79,5 @@ public sealed class PlayersController : ControllerBase
 
         return ResultToHttp.ToActionResult(this, result, () => NoContent());
     }
-    [HttpPost("{id:guid}/upgrades/click-power")]
-    public async Task<ActionResult<PlayerResponse>> UpgradeClickPower([FromRoute] Guid id, CancellationToken ct)
-    {
-        var result = await _service.UpgradeClickPowerAsync(new PlayerId(id), ct);
-
-        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
-            this,
-            result,
-            ToResponse,
-            dto => Ok(dto));
-    }
 }
 
