@@ -12,6 +12,11 @@ public static class PlayerMappings
             p.Stats.Level,
             p.Stats.Coins,
             p.Stats.ClickPower,
-            p.Stats.ClickPowerLevel
+            p.Stats.ClickPowerLevel,
+            p.Stats.CoinsPerClickLevel,
+            p.Stats.AutoClickerLevel,
+            p.Stats.TotalClicks,
+            p.Stats.TotalCoinsEarned,
+            p.Stats.TotalCoinsSpent
         );
 }

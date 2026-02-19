@@ -33,6 +33,8 @@ public sealed class Player : Entity<PlayerId>
     }
     public void Click()
     {
+        Stats.RegisterClick();
+
         var coinsGained = Stats.ClickPower + Stats.BonusCoinsPerClick;
         Stats.AddCoins(Stats.ClickPower);
     }

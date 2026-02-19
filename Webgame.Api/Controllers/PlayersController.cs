@@ -23,7 +23,12 @@ public sealed class PlayersController : ControllerBase
         int Level,
         long Coins,
         int ClickPower,
-        int ClickPowerLevel
+        int ClickPowerLevel,
+        int CoinsPerClickLevel,
+        int AutoClickerLevel,
+        long TotalClicks,
+        long TotalCoinsEarned,
+        long TotalCoinsSpent
     );
     [HttpPost]
     public async Task<ActionResult<PlayerResponse>> Create([FromBody] CreatePlayerRequest request, CancellationToken ct)
@@ -56,7 +61,12 @@ public sealed class PlayersController : ControllerBase
             p.Stats.Level,
             p.Stats.Coins,
             p.Stats.ClickPower,
-            p.Stats.ClickPowerLevel
+            p.Stats.ClickPowerLevel,
+            p.Stats.CoinsPerClickLevel,
+            p.Stats.AutoClickerLevel,
+            p.Stats.TotalClicks,
+            p.Stats.TotalCoinsEarned,
+            p.Stats.TotalCoinsSpent
         );
 
     [HttpPost("{id:guid}/click")]

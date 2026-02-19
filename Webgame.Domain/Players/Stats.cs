@@ -23,11 +23,15 @@ public sealed class Stats
     public int AutoCoinsPerTick => AutoClickerLevel; // 0,1,2,3...
     public void UpgradeCoinsPerClick() => CoinsPerClickLevel++;
     public void UpgradeAutoClicker() => AutoClickerLevel++;
-
+    // Lifetime
+    public long TotalClicks { get; private set; }
+    public long TotalCoinsEarned { get; private set; }
+    public long TotalCoinsSpent { get; private set; }
     public void AddCoins(long amount)
     {
         if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
         Coins += amount;
+        TotalCoinsEarned += amount;
     }
 
     public bool TrySpendCoins(long amount)
@@ -36,6 +40,7 @@ public sealed class Stats
         if (Coins < amount) return false;
 
         Coins -= amount;
+        TotalCoinsEarned += amount;
         return true;
     }
     public void UpgradeClickPower()
@@ -43,5 +48,10 @@ public sealed class Stats
         ClickPowerLevel++;
         ClickPower++;
     }
+    public void RegisterClick()
+    {
+        TotalClicks++;
+    }
+
 }
 
