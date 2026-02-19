@@ -33,6 +33,7 @@ public sealed class Player : Entity<PlayerId>
     }
     public void Click()
     {
+        var coinsGained = Stats.ClickPower + Stats.BonusCoinsPerClick;
         Stats.AddCoins(Stats.ClickPower);
     }
     public static bool TryCreate(string name, out Player? player)
@@ -70,5 +71,40 @@ public sealed class Player : Entity<PlayerId>
 
         Stats.UpgradeClickPower();
         return true;
+    }
+    public long GetCoinsPerClickUpgradeCost()
+    {
+        // 25, 50, 75, 100...
+        return 25L * (Stats.CoinsPerClickLevel + 1);
+    }
+
+    public bool TryUpgradeCoinsPerClick(out long cost)
+    {
+        cost = GetCoinsPerClickUpgradeCost();
+        if (!Stats.TrySpendCoins(cost)) return false;
+
+        Stats.UpgradeCoinsPerClick();
+        return true;
+    }
+
+    public long GetAutoClickerUpgradeCost()
+    {
+        // 100, 200, 300...
+        return 100L * (Stats.AutoClickerLevel + 1);
+    }
+
+    public bool TryUpgradeAutoClicker(out long cost)
+    {
+        cost = GetAutoClickerUpgradeCost();
+        if (!Stats.TrySpendCoins(cost)) return false;
+
+        Stats.UpgradeAutoClicker();
+        return true;
+    }
+    public void Tick()
+    {
+        var coins = Stats.AutoCoinsPerTick;
+        if (coins > 0)
+            Stats.AddCoins(coins);
     }
 }

@@ -71,6 +71,8 @@ public sealed class PlayerService
         var success = key switch
         {
             "click_power" => player.TryUpgradeClickPower(out _),
+            "coins_per_click" => player.TryUpgradeCoinsPerClick(out _),
+            "auto_clicker" => player.TryUpgradeAutoClicker(out _),
             _ => (bool?)null
         };
 
@@ -79,6 +81,18 @@ public sealed class PlayerService
 
         if (success is false)
             return Result<Player>.Fail(Errors.NotEnoughCoins);
+
+        _repo.Update(player);
+        await _uow.SaveChangesAsync(ct);
+
+        return Result<Player>.Ok(player);
+    }
+    public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
+    {
+        var player = await _repo.GetByIdAsync(id, ct);
+        if (player is null) return Result<Player>.Fail(Errors.PlayerNotFound);
+
+        player.Tick();
 
         _repo.Update(player);
         await _uow.SaveChangesAsync(ct);

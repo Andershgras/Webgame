@@ -71,13 +71,23 @@ public sealed class PlayersController : ControllerBase
             dto => Ok(dto));
     }
 
-
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete([FromRoute] Guid id, CancellationToken ct)
     {
         var result = await _service.DeletePlayerAsync(new PlayerId(id), ct);
 
         return ResultToHttp.ToActionResult(this, result, () => NoContent());
+    }
+    [HttpPost("{id:guid}/tick")]
+    public async Task<ActionResult<PlayerResponse>> Tick([FromRoute] Guid id, CancellationToken ct)
+    {
+        var result = await _service.TickAsync(new PlayerId(id), ct);
+
+        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
+            this,
+            result,
+            PlayerMappings.ToResponse,
+            dto => Ok(dto));
     }
 }
 
