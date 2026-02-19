@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Webgame.Application.Common;
+using Webgame.Contracts.Upgrades;
 
 namespace Webgame.Application.Upgrades;
 

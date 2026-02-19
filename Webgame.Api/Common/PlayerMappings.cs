@@ -1,11 +1,12 @@
 ﻿using Webgame.Api.Controllers;
+using Webgame.Contracts.Players;
 using Webgame.Domain.Players;
 
 namespace Webgame.Api.Common;
 
 public static class PlayerMappings
 {
-    public static PlayersController.PlayerResponse ToResponse(Player p)
+    public static PlayerResponse ToResponse(Player p)
         => new(
             p.Id.Value,
             p.Name,

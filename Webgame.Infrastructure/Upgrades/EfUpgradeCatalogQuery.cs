@@ -3,6 +3,7 @@ using Webgame.Application.Common;
 using Webgame.Application.Upgrades;
 using Webgame.Domain.Players;
 using Webgame.Infrastructure.Persistence;
+using Webgame.Contracts.Upgrades;
 
 namespace Webgame.Infrastructure.Upgrades;
 

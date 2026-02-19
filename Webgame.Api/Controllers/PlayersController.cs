@@ -2,6 +2,7 @@
 using Webgame.Application.Players;
 using Webgame.Domain.Players;
 using Webgame.Api.Common;
+using Webgame.Contracts.Players;
 
 namespace Webgame.Api.Controllers;
 
@@ -17,19 +18,7 @@ public sealed class PlayersController : ControllerBase
     }
 
     public sealed record CreatePlayerRequest(string Name);
-    public sealed record PlayerResponse(
-        Guid Id,
-        string Name,
-        int Level,
-        long Coins,
-        int ClickPower,
-        int ClickPowerLevel,
-        int CoinsPerClickLevel,
-        int AutoClickerLevel,
-        long TotalClicks,
-        long TotalCoinsEarned,
-        long TotalCoinsSpent
-    );
+
     [HttpPost]
     public async Task<ActionResult<PlayerResponse>> Create([FromBody] CreatePlayerRequest request, CancellationToken ct)
     {
@@ -38,7 +27,7 @@ public sealed class PlayersController : ControllerBase
         return ResultToHttp.ToActionResult<Player, PlayerResponse>(
             this,
             result,
-            ToResponse,
+            PlayerMappings.ToResponse,
             dto => CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto));
     }
 
@@ -51,24 +40,9 @@ public sealed class PlayersController : ControllerBase
         return ResultToHttp.ToActionResult<Player, PlayerResponse>(
             this,
             result,
-            ToResponse,
+            PlayerMappings.ToResponse,
             dto => Ok(dto));
     }
-    private static PlayerResponse ToResponse(Player p)
-        => new(
-            p.Id.Value,
-            p.Name,
-            p.Stats.Level,
-            p.Stats.Coins,
-            p.Stats.ClickPower,
-            p.Stats.ClickPowerLevel,
-            p.Stats.CoinsPerClickLevel,
-            p.Stats.AutoClickerLevel,
-            p.Stats.TotalClicks,
-            p.Stats.TotalCoinsEarned,
-            p.Stats.TotalCoinsSpent
-        );
-
     [HttpPost("{id:guid}/click")]
     public async Task<ActionResult<PlayerResponse>> Click([FromRoute] Guid id, CancellationToken ct)
     {
@@ -77,7 +51,7 @@ public sealed class PlayersController : ControllerBase
         return ResultToHttp.ToActionResult<Player, PlayerResponse>(
             this,
             result,
-            ToResponse,
+            PlayerMappings.ToResponse,
             dto => Ok(dto));
     }
 

@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Webgame.Domain.Players;
 
 namespace Webgame.Application.Upgrades;
-
-public sealed record UpgradeCatalogEntry(
+public sealed record UpgradePurchaseResult(
     string Key,
-    string Name,
-    int CurrentLevel,
-    long NextCost,
-    string EffectDescription,
-    bool CanAfford
+    long Cost,
+    int NewLevel,
+    Player Player
 );
+

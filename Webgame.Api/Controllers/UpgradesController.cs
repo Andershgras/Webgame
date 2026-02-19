@@ -2,7 +2,8 @@
 using Webgame.Api.Common;
 using Webgame.Application.Players;
 using Webgame.Application.Upgrades;
-using Webgame.Domain.Players;
+using Webgame.Contracts.Upgrades;
+using Webgame.Contracts.Players;
 
 namespace Webgame.Api.Controllers;
 
@@ -32,15 +33,21 @@ public sealed class UpgradesController : ControllerBase
             dto => Ok(dto));
     }
     [HttpPost("{key}/buy")]
-    public async Task<ActionResult<PlayersController.PlayerResponse>> Buy(Guid playerId, string key, CancellationToken ct)
+    public async Task<ActionResult<UpgradePurchaseResponse>> Buy(Guid playerId, string key, CancellationToken ct)
     {
         var result = await _players.BuyUpgradeAsync(new Webgame.Domain.Players.PlayerId(playerId), key, ct);
 
-        return ResultToHttp.ToActionResult<Player, PlayersController.PlayerResponse>(
+        return ResultToHttp.ToActionResult<Webgame.Application.Upgrades.UpgradePurchaseResult, UpgradePurchaseResponse>(
             this,
             result,
-            PlayerMappings.ToResponse,
-            dto => Ok(dto));
+            r => new UpgradePurchaseResponse(
+                r.Key,
+                r.Cost,
+                r.NewLevel,
+                PlayerMappings.ToResponse(r.Player)
+            ),
+            dto => Ok(dto)
+        );
     }
 }
 

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Webgame.Application.Common;
 using Webgame.Application.Persistence;
+using Webgame.Application.Upgrades;
 using Webgame.Domain.Players;
 
 namespace Webgame.Application.Players;
@@ -61,33 +62,48 @@ public sealed class PlayerService
 
         return Result.Ok();
     }
-    public async Task<Result<Player>> BuyUpgradeAsync(PlayerId id, string key, CancellationToken ct)
+    public async Task<Result<UpgradePurchaseResult>> BuyUpgradeAsync(PlayerId id, string key, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
-        if (player is null) return Result<Player>.Fail(Errors.PlayerNotFound);
+        if (player is null) return Result<UpgradePurchaseResult>.Fail(Errors.PlayerNotFound);
 
         key = (key ?? "").Trim().ToLowerInvariant();
 
-        var success = key switch
+        bool? success;
+        long cost;
+        int newLevel;
+
+        switch (key)
         {
-            "click_power" => player.TryUpgradeClickPower(out _),
-            "coins_per_click" => player.TryUpgradeCoinsPerClick(out _),
-            "auto_clicker" => player.TryUpgradeAutoClicker(out _),
-            _ => (bool?)null
-        };
+            case "click_power":
+                success = player.TryUpgradeClickPower(out cost);
+                newLevel = player.Stats.ClickPowerLevel;
+            break;
 
-        if (success is null)
-            return Result<Player>.Fail(Errors.InvalidUpgradeKey);
+            case "coins_per_click":
+                success = player.TryUpgradeCoinsPerClick(out cost);
+                newLevel = player.Stats.CoinsPerClickLevel;
+            break;
 
-        if (success is false)
-            return Result<Player>.Fail(Errors.NotEnoughCoins);
+            case "auto_clicker":
+                success = player.TryUpgradeAutoClicker(out cost);
+                newLevel = player.Stats.AutoClickerLevel;
+            break;
 
-        _repo.Update(player);
-        await _uow.SaveChangesAsync(ct);
-
-        return Result<Player>.Ok(player);
+            default:
+                return Result<UpgradePurchaseResult>.Fail(Errors.InvalidUpgradeKey);
     }
-    public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
+
+    if (success is false)
+        return Result<UpgradePurchaseResult>.Fail(Errors.NotEnoughCoins);
+
+    _repo.Update(player);
+    await _uow.SaveChangesAsync(ct);
+
+    return Result<UpgradePurchaseResult>.Ok(new UpgradePurchaseResult(key, cost, newLevel, player));
+}
+
+public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
         if (player is null) return Result<Player>.Fail(Errors.PlayerNotFound);

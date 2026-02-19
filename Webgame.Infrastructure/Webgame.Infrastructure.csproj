@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Webgame.Application\Webgame.Application.csproj" />
+    <ProjectReference Include="..\Webgame.Contracts\Webgame.Contracts.csproj" />
     <ProjectReference Include="..\Webgame.Domain\Webgame.Domain.csproj" />
   </ItemGroup>
 
