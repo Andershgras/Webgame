@@ -1,0 +1,61 @@
+﻿@page "/"
+@inject Api.ApiClient Api
+
+<h3>Webgame</h3>
+
+@if (_player is null)
+{
+    <button @onclick="Create">Create Player</button>
+}
+else
+{
+    <p><b>Coins:</b> @_player.Coins</p>
+    <p><b>Click Power:</b> @_player.ClickPower</p>
+
+    <button @onclick="Click">Click</button>
+    <button @onclick="Tick">Tick</button>
+
+    <h4>Upgrades</h4>
+    @foreach (var u in _upgrades)
+    {
+        <div>
+            <b>@u.Name</b> (lvl @u.CurrentLevel) – cost @u.NextCost
+            <button disabled="@(!u.CanAfford)" @onclick="() => Buy(u.Key)">Buy</button>
+        </div>
+    }
+}
+
+@code {
+    private PlayerResponse? _player;
+    private IReadOnlyList<UpgradeCatalogEntry> _upgrades = [];
+
+    private async Task Create()
+    {
+        _player = await Api.CreatePlayerAsync("BlazorPlayer");
+        await LoadUpgrades();
+    }
+
+    private async Task Click()
+    {
+        _player = await Api.ClickAsync(_player!.Id);
+        await LoadUpgrades();
+    }
+
+    private async Task Tick()
+    {
+        _player = await Api.TickAsync(_player!.Id);
+        await LoadUpgrades();
+    }
+
+    private async Task Buy(string key)
+    {
+        var res = await Api.BuyUpgradeAsync(_player!.Id, key);
+        _player = res.Player;
+        await LoadUpgrades();
+    }
+
+    private async Task LoadUpgrades()
+    {
+        _upgrades = await Api.GetUpgradesAsync(_player!.Id);
+    }
+}

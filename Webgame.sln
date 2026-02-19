@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webgame.Contracts", "Webgame.Contracts\Webgame.Contracts.csproj", "{D1FFD7FB-E09E-420A-BFA5-47323DECC77B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webgame.Blazor", "Webgame.Blazor\Webgame.Blazor.csproj", "{954573A2-AD82-4B86-B0DC-E87F10F2CC7D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{D1FFD7FB-E09E-420A-BFA5-47323DECC77B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1FFD7FB-E09E-420A-BFA5-47323DECC77B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1FFD7FB-E09E-420A-BFA5-47323DECC77B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{954573A2-AD82-4B86-B0DC-E87F10F2CC7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{954573A2-AD82-4B86-B0DC-E87F10F2CC7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{954573A2-AD82-4B86-B0DC-E87F10F2CC7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{954573A2-AD82-4B86-B0DC-E87F10F2CC7D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

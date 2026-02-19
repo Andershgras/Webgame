@@ -51,6 +51,18 @@ namespace Webgame.Api
             // Upgrade Catalog
             builder.Services.AddScoped<IUpgradeCatalogQuery, EfUpgradeCatalogQuery>();
             #endregion
+            const string BlazorCorsPolicy = "BlazorCors";
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(BlazorCorsPolicy, policy =>
+                {
+                    policy
+                        .WithOrigins("https://localhost:7258", "http://localhost:7258")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -62,6 +74,7 @@ namespace Webgame.Api
             app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseExceptionHandler();
             app.UseHttpsRedirection();
+            app.UseCors(BlazorCorsPolicy);
             app.UseAuthorization();
             app.MapControllers();
             app.Run();
