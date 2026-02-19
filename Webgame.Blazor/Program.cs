@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Webgame.Blazor.Api;
+using Webgame.Blazor.State;
 
 namespace Webgame.Blazor
 {
@@ -18,6 +19,7 @@ namespace Webgame.Blazor
                     BaseAddress = new Uri("https://localhost:7083/") //API URL
                 });
             builder.Services.AddScoped<ApiClient>();
+            builder.Services.AddScoped<PlayerSession>();
             await builder.Build().RunAsync();
         }
     }

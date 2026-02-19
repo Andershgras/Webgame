@@ -1,7 +1,9 @@
 ﻿@page "/"
 @inject Api.ApiClient Api
+@inject Webgame.Blazor.State.PlayerSession Session
 
 <h3>Webgame</h3>
+<p>Stored playerId: @_storedIdText</p>
 
 @if (_player is null)
 {
@@ -28,10 +30,35 @@ else
 @code {
     private PlayerResponse? _player;
     private IReadOnlyList<UpgradeCatalogEntry> _upgrades = [];
+    private string _storedIdText = "(not loaded)";
 
+    private bool _loadedFromStorage;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _loadedFromStorage) return;
+
+        _loadedFromStorage = true;
+
+        var storedId = await Session.GetPlayerIdAsync();
+        _storedIdText = storedId?.ToString() ?? "(null)";
+        if (storedId is null) return;
+
+        try
+        {
+            _player = await Api.GetPlayerAsync(storedId.Value);
+            await LoadUpgrades();
+            StateHasChanged();
+        }
+        catch
+        {
+            await Session.ClearAsync();
+        }
+    }
     private async Task Create()
     {
         _player = await Api.CreatePlayerAsync("BlazorPlayer");
+        await Session.SetPlayerIdAsync(_player.Id);
         await LoadUpgrades();
     }
 
