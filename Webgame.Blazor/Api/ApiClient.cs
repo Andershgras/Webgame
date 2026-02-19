@@ -1,6 +1,8 @@
 ﻿using System.Net.Http.Json;
 using Webgame.Contracts.Players;
 using Webgame.Contracts.Upgrades;
+using System.Net;
+using System.Net.Http.Json;
 
 namespace Webgame.Blazor.Api;
 
@@ -12,33 +14,60 @@ public sealed class ApiClient
     {
         _http = http;
     }
-
     public async Task<PlayerResponse> CreatePlayerAsync(string name)
     {
         var res = await _http.PostAsJsonAsync("api/players", new { name });
-        res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<PlayerResponse>())!;
+        return await ReadOrThrowAsync<PlayerResponse>(res);
     }
 
     public async Task<PlayerResponse> GetPlayerAsync(Guid id)
-        => await _http.GetFromJsonAsync<PlayerResponse>($"api/players/{id}")!;
+    {
+        var res = await _http.GetAsync($"api/players/{id}");
+        return await ReadOrThrowAsync<PlayerResponse>(res);
+    }
 
     public async Task<PlayerResponse> ClickAsync(Guid id)
-        => await _http.PostAsync($"api/players/{id}/click", null)
-                      .ContinueWith(t => t.Result.Content.ReadFromJsonAsync<PlayerResponse>()).Unwrap();
+    {
+        var res = await _http.PostAsync($"api/players/{id}/click", null);
+        return await ReadOrThrowAsync<PlayerResponse>(res);
+    }
 
     public async Task<PlayerResponse> TickAsync(Guid id)
-        => await _http.PostAsync($"api/players/{id}/tick", null)
-                      .ContinueWith(t => t.Result.Content.ReadFromJsonAsync<PlayerResponse>()).Unwrap();
+    {
+        var res = await _http.PostAsync($"api/players/{id}/tick", null);
+        return await ReadOrThrowAsync<PlayerResponse>(res);
+    }
 
     public async Task<IReadOnlyList<UpgradeCatalogEntry>> GetUpgradesAsync(Guid id)
-        => await _http.GetFromJsonAsync<IReadOnlyList<UpgradeCatalogEntry>>(
-            $"api/players/{id}/upgrades")!;
+    {
+        var res = await _http.GetAsync($"api/players/{id}/upgrades");
+        return await ReadOrThrowAsync<IReadOnlyList<UpgradeCatalogEntry>>(res);
+    }
 
     public async Task<UpgradePurchaseResponse> BuyUpgradeAsync(Guid id, string key)
     {
         var res = await _http.PostAsync($"api/players/{id}/upgrades/{key}/buy", null);
-        res.EnsureSuccessStatusCode();
-        return (await res.Content.ReadFromJsonAsync<UpgradePurchaseResponse>())!;
+        return await ReadOrThrowAsync<UpgradePurchaseResponse>(res);
+    }
+    private async Task<T> ReadOrThrowAsync<T>(HttpResponseMessage res)
+    {
+        if (res.IsSuccessStatusCode)
+        {
+            var ok = await res.Content.ReadFromJsonAsync<T>();
+            return ok!;
+        }
+
+        ApiProblemDetails? problem = null;
+
+        try
+        {
+            problem = await res.Content.ReadFromJsonAsync<ApiProblemDetails>();
+        }
+        catch
+        {
+            // ignore parse issues
+        }
+
+        throw new ApiException(res.StatusCode, problem);
     }
 }

@@ -26,13 +26,26 @@ else
         </div>
     }
 }
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div style="border:1px solid #f00; padding:12px; margin-bottom:12px;">
+        <b>Error:</b> @_error
+        @if (!string.IsNullOrWhiteSpace(_traceId))
+        {
+            <div style="opacity:0.7; font-size: 0.9em;">traceId: @_traceId</div>
+        }
+        <button @onclick="ClearError" style="margin-top:8px;">Dismiss</button>
+    </div>
+}
 
 @code {
     private PlayerResponse? _player;
     private IReadOnlyList<UpgradeCatalogEntry> _upgrades = [];
     private string _storedIdText = "(not loaded)";
-
     private bool _loadedFromStorage;
+    // Error handling
+    private string? _error;
+    private string? _traceId;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -57,32 +70,93 @@ else
     }
     private async Task Create()
     {
-        _player = await Api.CreatePlayerAsync("BlazorPlayer");
-        await Session.SetPlayerIdAsync(_player.Id);
-        await LoadUpgrades();
+        ClearError();
+
+        try
+        {
+            _player = await Api.CreatePlayerAsync("BlazorPlayer");
+            await Session.SetPlayerIdAsync(_player.Id);
+            await LoadUpgrades();
+        }
+        catch (Exception ex)
+        {
+            SetError(ex);
+        }
     }
 
     private async Task Click()
     {
-        _player = await Api.ClickAsync(_player!.Id);
-        await LoadUpgrades();
+        if (_player is null)
+            return;
+
+        ClearError();
+
+        try
+        {
+            _player = await Api.ClickAsync(_player.Id);
+            await LoadUpgrades();
+        }
+        catch (Exception ex)
+        {
+            SetError(ex);
+        }
     }
 
     private async Task Tick()
     {
-        _player = await Api.TickAsync(_player!.Id);
-        await LoadUpgrades();
+        if (_player is null)
+            return;
+
+        ClearError();
+
+        try
+        {
+            _player = await Api.TickAsync(_player.Id);
+            await LoadUpgrades();
+        }
+        catch (Exception ex)
+        {
+            SetError(ex);
+        }
     }
 
     private async Task Buy(string key)
     {
-        var res = await Api.BuyUpgradeAsync(_player!.Id, key);
-        _player = res.Player;
-        await LoadUpgrades();
+        ClearError();
+
+        try
+        {
+            var res = await Api.BuyUpgradeAsync(_player!.Id, key);
+            _player = res.Player;
+            await LoadUpgrades();
+        }
+        catch (Exception ex)
+        {
+            SetError(ex);
+        }
     }
 
     private async Task LoadUpgrades()
     {
         _upgrades = await Api.GetUpgradesAsync(_player!.Id);
+    }
+    // Error handling
+    private void ClearError()
+    {
+        _error = null;
+        _traceId = null;
+    }
+
+    private void SetError(Exception ex)
+    {
+        if (ex is Webgame.Blazor.Api.ApiException apiEx)
+        {
+            _error = apiEx.UserMessage;
+            _traceId = apiEx.Trace;
+            return;
+        }
+
+        _error = ex.Message;
+        _traceId = null;
     }
 }
