@@ -1,8 +1,9 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
+using System.Net.Http.Json;
+using Webgame.Contracts.Leaderboards;
 using Webgame.Contracts.Players;
 using Webgame.Contracts.Upgrades;
-using System.Net;
-using System.Net.Http.Json;
 
 namespace Webgame.Blazor.Api;
 
@@ -69,5 +70,10 @@ public sealed class ApiClient
         }
 
         throw new ApiException(res.StatusCode, problem);
+    }
+    public async Task<IReadOnlyList<LeaderboardEntry>> GetLeaderboardAsync(int top = 10)
+    {
+        var res = await _http.GetAsync($"api/leaderboard?top={top}");
+        return await ReadOrThrowAsync<IReadOnlyList<LeaderboardEntry>>(res);
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Webgame.Application.Common;
+using Webgame.Contracts.Leaderboards;
 using Webgame.Application.Leaderboards;
 using Webgame.Infrastructure.Persistence;
 

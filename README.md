@@ -124,38 +124,14 @@ Unhandled exceptions are handled centrally.
 
 ---
 
-### Configuration (User Secrets)
-
-Database credentials are **not stored in Git**.
-
-In Visual Studio:
-1. Right-click `Webgame.Api`
-2. Select **Manage User Secrets**
-3. Add:
-
-```json
-{
-  "ConnectionStrings": {
-    "WebgameDb": "Server=YOUR_SERVER;Database=YOUR_DB;User Id=YOUR_USER;Password=YOUR_PASSWORD;Encrypt=True;TrustServerCertificate=True"
-  }
-}
-
-Database Migrations:
-
-Run from Package Manager Console:
-
-Add-Migration InitialCreate -Project Webgame.Infrastructure -StartupProject Webgame.Api
-Update-Database -Project Webgame.Infrastructure -StartupProject Webgame.Api
-
-API Endpoints:
-
+### API Endpoints
 - POST /api/players – Create player
 - GET /api/players/{id} – Get player
 - POST /api/players/{id}/click – Perform click action
 - DELETE /api/players/{id} – Delete player
 - Swagger is available in development at /swagger
 
-Conventions & Rules:
+### Conventions & Rules:
 To keep the architecture consistent:
 - Controllers only call Application services
 - Application services return Result
@@ -165,11 +141,11 @@ To keep the architecture consistent:
 - Secrets never go into Git
 - Errors are always returned as ProblemDetails
 
-Branching Strategy:
+### Branching Strategy:
 - main – Stable baseline
 - dev – Active development
 - feature/* – Feature branches merged into dev
 
-Notes:
+### Notes:
 This project is designed as a learning project, but follows
 real-world patterns to ensure it can scale as features are added.

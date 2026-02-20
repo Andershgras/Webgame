@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Webgame.Api.Common;
+using Webgame.Contracts.Leaderboards;
 using Webgame.Application.Leaderboards;
 
 namespace Webgame.Api.Controllers;
