@@ -25,6 +25,17 @@ else
             <button disabled="@(!u.CanAfford)" @onclick="() => Buy(u.Key)">Buy</button>
         </div>
     }
+    <h5>Debug Upgrades</h5>
+    @foreach (var u in _upgrades)
+    {
+        <div>
+            <b>@u.Name</b> (lvl @u.CurrentLevel) – cost @u.NextCost
+
+            <button disabled="@(!u.CanAfford)" @onclick="() => Buy(u.Key)">Buy</button>
+
+            <button @onclick="() => Buy(u.Key)">Force buy (test)</button>
+        </div>
+    }
 }
 @if (!string.IsNullOrWhiteSpace(_error))
 {
