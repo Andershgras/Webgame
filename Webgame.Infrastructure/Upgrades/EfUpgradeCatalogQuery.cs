@@ -28,7 +28,6 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
             return Result<IReadOnlyList<UpgradeCatalogEntry>>.Fail(Errors.PlayerNotFound);
 
         var cost = player.GetClickPowerUpgradeCost();
-        var cpcCost = player.GetCoinsPerClickUpgradeCost();
         var autoCost = player.GetAutoClickerUpgradeCost();
 
         IReadOnlyList<UpgradeCatalogEntry> list = new List<UpgradeCatalogEntry>
@@ -40,14 +39,6 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
                 NextCost: cost,
                 EffectDescription: "+1 Click Power",
                 CanAfford: player.Stats.Coins >= cost
-            ),
-            new(
-                Key: "coins_per_click",
-                Name: "Coins Per Click",
-                CurrentLevel: player.Stats.CoinsPerClickLevel,
-                NextCost: cpcCost,
-                EffectDescription: $"+1 bonus coin per click (now +{player.Stats.BonusCoinsPerClick})",
-                CanAfford: player.Stats.Coins >= cpcCost
             ),
             new(
                 Key: "auto_clicker",

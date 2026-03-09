@@ -16,12 +16,9 @@ public sealed class Stats
     // Upgrades
     public int ClickPower { get; private set; } = 1;
     public int ClickPowerLevel { get; private set; } = 1;
-    public int CoinsPerClickLevel { get; private set; } = 0;
     public int AutoClickerLevel { get; private set; } = 0;
     // Helpers
-    public int BonusCoinsPerClick => CoinsPerClickLevel; // 0,1,2,3...
-    public int AutoCoinsPerTick => AutoClickerLevel; // 0,1,2,3...
-    public void UpgradeCoinsPerClick() => CoinsPerClickLevel++;
+    public int AutoCoinsPerTick => AutoClickerLevel;
     public void UpgradeAutoClicker() => AutoClickerLevel++;
     // Lifetime
     public long TotalClicks { get; private set; }

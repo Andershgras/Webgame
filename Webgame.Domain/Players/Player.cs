@@ -35,7 +35,7 @@ public sealed class Player : Entity<PlayerId>
     {
         Stats.RegisterClick();
 
-        var coinsGained = Stats.ClickPower + Stats.BonusCoinsPerClick;
+        var coinsGained = Stats.ClickPower;
         Stats.AddCoins(Stats.ClickPower);
     }
     public static bool TryCreate(string name, out Player? player)
@@ -74,21 +74,6 @@ public sealed class Player : Entity<PlayerId>
         Stats.UpgradeClickPower();
         return true;
     }
-    public long GetCoinsPerClickUpgradeCost()
-    {
-        // 25, 50, 75, 100...
-        return 25L * (Stats.CoinsPerClickLevel + 1);
-    }
-
-    public bool TryUpgradeCoinsPerClick(out long cost)
-    {
-        cost = GetCoinsPerClickUpgradeCost();
-        if (!Stats.TrySpendCoins(cost)) return false;
-
-        Stats.UpgradeCoinsPerClick();
-        return true;
-    }
-
     public long GetAutoClickerUpgradeCost()
     {
         // 100, 200, 300...

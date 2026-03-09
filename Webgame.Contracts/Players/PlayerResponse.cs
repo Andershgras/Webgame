@@ -13,7 +13,6 @@ public sealed record PlayerResponse(
     long Coins,
     int ClickPower,
     int ClickPowerLevel,
-    int CoinsPerClickLevel,
     int AutoClickerLevel,
     long TotalClicks,
     long TotalCoinsEarned,

@@ -80,11 +80,6 @@ public sealed class PlayerService
                 newLevel = player.Stats.ClickPowerLevel;
             break;
 
-            case "coins_per_click":
-                success = player.TryUpgradeCoinsPerClick(out cost);
-                newLevel = player.Stats.CoinsPerClickLevel;
-            break;
-
             case "auto_clicker":
                 success = player.TryUpgradeAutoClicker(out cost);
                 newLevel = player.Stats.AutoClickerLevel;

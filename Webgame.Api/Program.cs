@@ -58,7 +58,12 @@ namespace Webgame.Api
                 options.AddPolicy(BlazorCorsPolicy, policy =>
                 {
                     policy
-                        .WithOrigins("https://localhost:7258", "http://localhost:7258")
+                        .WithOrigins(
+                            "https://localhost:7258",
+                            "http://localhost:7258",
+                            "http://localhost:5500",
+                            "http://127.0.0.1:5500"
+                        )
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });
