@@ -7,7 +7,7 @@
 <div style="margin-bottom:12px; display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
     <div>
         <label>Leaderboard:</label><br />
-        <select @bind="_selectedType" style="min-width:220px;">
+        <select value="@_selectedType" @onchange="OnLeaderboardTypeChanged" style="min-width:220px;">
             @foreach (var option in _options)
             {
                 <option value="@option.Value">@option.Label</option>
@@ -154,5 +154,10 @@ else
         Coins,
         ClickPower,
         Level,
+    }
+    private async Task OnLeaderboardTypeChanged(ChangeEventArgs e)
+    {
+        _selectedType = e.Value?.ToString() ?? "Coins";
+        await Load();
     }
 }
