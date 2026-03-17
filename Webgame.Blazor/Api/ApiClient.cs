@@ -51,10 +51,16 @@ public sealed class ApiClient
         return await ReadOrThrowAsync<UpgradePurchaseResponse>(res);
     }
 
-    public async Task<IReadOnlyList<LeaderboardEntry>> GetLeaderboardAsync(int top = 10, string type = "Coins")
+    public async Task<IReadOnlyList<LeaderboardEntry>> GetLeaderboardAsync(int top = 10, LeaderboardType type = LeaderboardType.Coins)
     {
-        var res = await _http.GetAsync($"api/leaderboard?top={top}&type={Uri.EscapeDataString(type)}");
+        var res = await _http.GetAsync($"api/leaderboard?top={top}&type={Uri.EscapeDataString(type.ToString())}");
         return await ReadOrThrowAsync<IReadOnlyList<LeaderboardEntry>>(res);
+    }
+
+    public async Task<int> GetLeaderboardRankAsync(Guid playerId, LeaderboardType type = LeaderboardType.Coins)
+    {
+        var res = await _http.GetAsync($"api/leaderboard/rank?playerId={playerId}&type={Uri.EscapeDataString(type.ToString())}");
+        return await ReadOrThrowAsync<int>(res);
     }
 
     private async Task<T> ReadOrThrowAsync<T>(HttpResponseMessage res)

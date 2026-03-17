@@ -1,4 +1,5 @@
 ﻿@page "/leaderboard"
+@using Webgame.Contracts.Leaderboards
 @inject Webgame.Blazor.Api.ApiClient Api
 @inject Webgame.Blazor.State.PlayerSession Session
 
@@ -24,6 +25,14 @@
         <button @onclick="Load">Refresh</button>
     </div>
 </div>
+
+@if (_myRank is not null)
+{
+    <div style="margin-bottom:12px; padding:10px; border:1px solid #ccc; background:#f8f8f8;">
+        <b>Your rank:</b> #@_myRank.Value
+        <span style="opacity:0.7; margin-left:8px;">(@GetLeaderboardLabel(_selectedType))</span>
+    </div>
+}
 
 @if (!string.IsNullOrWhiteSpace(_error))
 {
@@ -86,18 +95,19 @@ else
     private bool _loading;
 
     private Guid? _myId;
+    private int? _myRank;
     private IReadOnlyList<LeaderboardEntry> _entries = Array.Empty<LeaderboardEntry>();
 
     private string? _error;
     private string? _traceId;
 
-    private string _selectedType = LeaderboardType.Coins.ToString();
+    private LeaderboardType _selectedType = LeaderboardType.Coins;
 
     private readonly List<LeaderboardOption> _options =
     [
-        new(LeaderboardType.Coins.ToString(), "Most Coins"),
-        new(LeaderboardType.ClickPower.ToString(), "Highest Click Power"),
-        new(LeaderboardType.Level.ToString(), "Highest Level"),
+        new(LeaderboardType.Coins, "Most Coins"),
+        new(LeaderboardType.ClickPower, "Highest Click Power"),
+        new(LeaderboardType.Level, "Highest Level")
     ];
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -117,6 +127,15 @@ else
         try
         {
             _entries = await Api.GetLeaderboardAsync(_top, _selectedType);
+
+            if (_myId is not null)
+            {
+                _myRank = await Api.GetLeaderboardRankAsync(_myId.Value, _selectedType);
+            }
+            else
+            {
+                _myRank = null;
+            }
         }
         catch (Exception ex)
         {
@@ -127,6 +146,28 @@ else
             _loading = false;
         }
     }
+
+    private async Task OnLeaderboardTypeChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<LeaderboardType>(e.Value?.ToString(), out var parsed))
+        {
+            _selectedType = parsed;
+        }
+        else
+        {
+            _selectedType = LeaderboardType.Coins;
+        }
+
+        await Load();
+    }
+
+    private static string GetLeaderboardLabel(LeaderboardType type) => type switch
+    {
+        LeaderboardType.Coins => "Most Coins",
+        LeaderboardType.ClickPower => "Highest Click Power",
+        LeaderboardType.Level => "Highest Level",
+        _ => type.ToString()
+    };
 
     private void ClearError()
     {
@@ -147,17 +188,5 @@ else
         _traceId = null;
     }
 
-    private sealed record LeaderboardOption(string Value, string Label);
-
-    private enum LeaderboardType
-    {
-        Coins,
-        ClickPower,
-        Level,
-    }
-    private async Task OnLeaderboardTypeChanged(ChangeEventArgs e)
-    {
-        _selectedType = e.Value?.ToString() ?? "Coins";
-        await Load();
-    }
+    private sealed record LeaderboardOption(LeaderboardType Value, string Label);
 }
