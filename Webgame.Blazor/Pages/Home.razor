@@ -1,4 +1,5 @@
 ﻿@page "/"
+@implements IAsyncDisposable
 @using Webgame.Blazor.Api
 @using Webgame.Blazor.State
 @using Webgame.Contracts.Players
@@ -27,15 +28,15 @@ else
     <p><b>Coins:</b> @_player.Coins</p>
     <p><b>Click Power:</b> @_player.ClickPower</p>
 
-    <button @onclick="Click">Click</button>
-    <button @onclick="Tick" style="margin-left:8px;">Tick</button>
+    <button @onclick="Click" disabled="@_isBusy">Click</button>
+    <button @onclick="Tick" disabled="@_isTicking" style="margin-left:8px;">Tick</button>
 
     <h4>Upgrades</h4>
     @foreach (var u in _upgrades)
     {
         <div>
             <b>@u.Name</b> (lvl @u.CurrentLevel) – cost @u.NextCost
-            <button disabled="@(!u.CanAfford)" @onclick="() => Buy(u.Key)">Buy</button>
+            <button disabled="@(!u.CanAfford || _isBusy)" @onclick="() => Buy(u.Key)">Buy</button>
         </div>
     }
 
@@ -44,10 +45,14 @@ else
     {
         <div>
             <b>@u.Name</b> (lvl @u.CurrentLevel) – cost @u.NextCost
-            <button disabled="@(!u.CanAfford)" @onclick="() => Buy(u.Key)">Buy</button>
-            <button @onclick="() => Buy(u.Key)">Force buy (test)</button>
+            <button disabled="@(!u.CanAfford || _isBusy)" @onclick="() => Buy(u.Key)">Buy</button>
+            <button disabled="@_isBusy" @onclick="() => Buy(u.Key)">Force buy (test)</button>
         </div>
     }
+
+    <div style="margin-top:12px;">
+        <button @onclick="ClearPlayer">Clear saved player</button>
+    </div>
 }
 
 @if (!string.IsNullOrWhiteSpace(_error))
@@ -70,8 +75,12 @@ else
 
     private string _playerName = "";
     private bool _isCreating;
+    private bool _isBusy;
+    private bool _isTicking;
 
-    // Error handling
+    private CancellationTokenSource? _autoTickCts;
+    private Task? _autoTickTask;
+
     private string? _error;
     private string? _traceId;
 
@@ -92,6 +101,7 @@ else
         {
             _player = await Api.GetPlayerAsync(storedId.Value);
             await LoadUpgrades();
+            EnsureAutoTickRunning();
             StateHasChanged();
         }
         catch
@@ -119,6 +129,7 @@ else
             await Session.SetPlayerIdAsync(_player.Id);
             _storedIdText = _player.Id.ToString();
             await LoadUpgrades();
+            EnsureAutoTickRunning();
             StateHasChanged();
         }
         catch (Exception ex)
@@ -133,10 +144,11 @@ else
 
     private async Task Click()
     {
-        if (_player is null)
+        if (_player is null || _isBusy)
             return;
 
         ClearError();
+        _isBusy = true;
 
         try
         {
@@ -147,14 +159,19 @@ else
         {
             SetError(ex);
         }
+        finally
+        {
+            _isBusy = false;
+        }
     }
 
     private async Task Tick()
     {
-        if (_player is null)
+        if (_player is null || _isTicking)
             return;
 
         ClearError();
+        _isTicking = true;
 
         try
         {
@@ -165,14 +182,19 @@ else
         {
             SetError(ex);
         }
+        finally
+        {
+            _isTicking = false;
+        }
     }
 
     private async Task Buy(string key)
     {
-        if (_player is null)
+        if (_player is null || _isBusy)
             return;
 
         ClearError();
+        _isBusy = true;
 
         try
         {
@@ -184,6 +206,10 @@ else
         {
             SetError(ex);
         }
+        finally
+        {
+            _isBusy = false;
+        }
     }
 
     private async Task LoadUpgrades()
@@ -192,6 +218,66 @@ else
             return;
 
         _upgrades = await Api.GetUpgradesAsync(_player.Id);
+    }
+
+    private void EnsureAutoTickRunning()
+    {
+        if (_player is null)
+            return;
+
+        if (_autoTickTask is not null && !_autoTickTask.IsCompleted)
+            return;
+
+        _autoTickCts = new CancellationTokenSource();
+        _autoTickTask = RunAutoTickAsync(_autoTickCts.Token);
+    }
+
+    private async Task RunAutoTickAsync(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                if (_player is null)
+                    continue;
+
+                if (_isTicking)
+                    continue;
+
+                await Tick();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task ClearPlayer()
+    {
+        StopAutoTick();
+
+        await Session.ClearAsync();
+        _player = null;
+        _upgrades = [];
+        _storedIdText = "(null)";
+        _playerName = "";
+        ClearError();
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void StopAutoTick()
+    {
+        if (_autoTickCts is null)
+            return;
+
+        _autoTickCts.Cancel();
+        _autoTickCts.Dispose();
+        _autoTickCts = null;
+        _autoTickTask = null;
     }
 
     private void ClearError()
@@ -211,5 +297,11 @@ else
 
         _error = ex.Message;
         _traceId = null;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        StopAutoTick();
+        return ValueTask.CompletedTask;
     }
 }
