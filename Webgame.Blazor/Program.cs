@@ -13,11 +13,14 @@ namespace Webgame.Blazor
             builder.RootComponents.Add<App>("#app");
             builder.RootComponents.Add<HeadOutlet>("head::after");
 
-            builder.Services.AddScoped(sp =>
-                new HttpClient
-                {
-                    BaseAddress = new Uri("https://localhost:7083/") //API URL
-                });
+            var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
+                ?? throw new InvalidOperationException("Missing configuration value: ApiBaseUrl");
+
+            builder.Services.AddScoped(sp => new HttpClient
+            {
+                BaseAddress = new Uri(apiBaseUrl)
+            });
+
             builder.Services.AddScoped<ApiClient>();
             builder.Services.AddScoped<PlayerSession>();
             await builder.Build().RunAsync();

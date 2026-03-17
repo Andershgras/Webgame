@@ -1,5 +1,3 @@
-
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Webgame.Api.Common;
 using Webgame.Application.Leaderboards;
@@ -19,14 +17,26 @@ namespace Webgame.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // For debugging purposes, print the connection string (without the password) to the console.
-            var cs = builder.Configuration.GetConnectionString("WebgameDb");
-            Console.WriteLine("DB CS (sanitized): " + (cs is null ? "NULL" : cs.Split("Password=")[0]));
+            const string FrontendCorsPolicy = "FrontendCors";
+
+            var connectionString = builder.Configuration.GetConnectionString("WebgameDb");
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "Missing connection string 'ConnectionStrings:WebgameDb'. " +
+                    "Set it in User Secrets locally or Azure App Service settings in production.");
+            }
+
+            var allowedOrigins = builder.Configuration
+                .GetSection("Cors:AllowedOrigins")
+                .Get<string[]>() ?? Array.Empty<string>();
+
+            Console.WriteLine("DB configured: " + (!string.IsNullOrWhiteSpace(connectionString)));
+            Console.WriteLine("Allowed CORS origins: " + string.Join(", ", allowedOrigins));
 
             #region Services
-            
+
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -36,52 +46,57 @@ namespace Webgame.Api
             // Infrastructure
             builder.Services.AddScoped<IPlayerRepository, EfPlayerRepository>();
             builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+            builder.Services.AddScoped<ILeaderboardQuery, EfLeaderboardQuery>();
+            builder.Services.AddScoped<IUpgradeCatalogQuery, EfUpgradeCatalogQuery>();
 
             // Persistence
             builder.Services.AddDbContext<WebgameDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("WebgameDb")));
+                options.UseSqlServer(connectionString));
 
             // Common
             builder.Services.AddProblemDetails();
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-            // Leaderboard
-            builder.Services.AddScoped<ILeaderboardQuery, EfLeaderboardQuery>();
-
-            // Upgrade Catalog
-            builder.Services.AddScoped<IUpgradeCatalogQuery, EfUpgradeCatalogQuery>();
-            #endregion
-            const string BlazorCorsPolicy = "BlazorCors";
-
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy(BlazorCorsPolicy, policy =>
+                options.AddPolicy(FrontendCorsPolicy, policy =>
                 {
+                    if (allowedOrigins.Length == 0)
+                    {
+                        return;
+                    }
+
                     policy
-                        .WithOrigins(
-                            "https://localhost:7258",
-                            "http://localhost:7258",
-                            "http://localhost:5500",
-                            "http://127.0.0.1:5500"
-                        )
+                        .WithOrigins(allowedOrigins)
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });
             });
+
+            #endregion
+
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
             app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseExceptionHandler();
             app.UseHttpsRedirection();
-            app.UseCors(BlazorCorsPolicy);
+            app.UseCors(FrontendCorsPolicy);
             app.UseAuthorization();
+
+            app.MapGet("/health", () => Results.Ok(new
+            {
+                status = "ok",
+                environment = app.Environment.EnvironmentName
+            }));
+
             app.MapControllers();
+
             app.Run();
         }
     }
