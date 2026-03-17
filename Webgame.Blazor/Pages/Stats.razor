@@ -1,0 +1,49 @@
+﻿@page "/stats"
+@using Webgame.Blazor.Api
+@using Webgame.Blazor.State
+@using Webgame.Contracts.Players
+
+@inject ApiClient Api
+@inject PlayerSession Session
+
+<h3>Stats</h3>
+
+@if (_player is null)
+{
+    <p>No player loaded.</p>
+}
+else
+{
+    <p><b>Name:</b> @_player.Name</p>
+    <p><b>Total Clicks:</b> @_player.TotalClicks</p>
+    <p><b>Total Coins Earned:</b> @_player.TotalCoinsEarned</p>
+    <p><b>Total Coins Spent:</b> @_player.TotalCoinsSpent</p>
+}
+
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div style="border:1px solid #f00; padding:12px; margin-bottom:12px;">
+        <b>Error:</b> @_error
+    </div>
+}
+
+@code {
+    private PlayerResponse? _player;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var playerId = await Session.GetPlayerIdAsync();
+            if (playerId is null)
+                return;
+
+            _player = await Api.GetPlayerAsync(playerId.Value);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+}
