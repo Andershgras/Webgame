@@ -41,12 +41,12 @@ else
         </div>
     }
 }
-@if (_player is not null && _showOfflineReward)
+@if (_showOfflineReward)
 {
     <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
         <b>Offline Progress:</b><br />
-        You earned @_player.OfflineCoinsEarned coins<br />
-        over @(_player.OfflineSecondsApplied / 60) minute(s)
+        You earned @_offlineCoinsEarned coins<br />
+        over @(_offlineSecondsApplied / 60) minute(s)
     </div>
 }
 @if (!string.IsNullOrWhiteSpace(_error))
@@ -78,6 +78,8 @@ else
     private string? _error;
     private string? _traceId;
     private bool _showOfflineReward;
+    private long _offlineCoinsEarned;
+    private int _offlineSecondsApplied;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -95,6 +97,14 @@ else
         try
         {
             _player = await Api.GetPlayerAsync(storedId.Value);
+            if (_player.OfflineCoinsEarned > 0)
+            {
+                _offlineCoinsEarned = _player.OfflineCoinsEarned;
+                _offlineSecondsApplied = _player.OfflineSecondsApplied;
+                _showOfflineReward = true;
+
+           _    = HideOfflineRewardAfterDelay();
+            }
             await LoadUpgrades();
             EnsureAutoTickRunning();
             StateHasChanged();
@@ -103,12 +113,6 @@ else
         {
             await Session.ClearAsync();
             _storedIdText = "(null)";
-        }
-        if (_player.OfflineCoinsEarned > 0)
-        {
-            _showOfflineReward = true;
-
-            _ = HideOfflineRewardAfterDelay();
         }
     }
     private async Task HideOfflineRewardAfterDelay()

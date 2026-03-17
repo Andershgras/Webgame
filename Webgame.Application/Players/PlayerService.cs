@@ -39,10 +39,15 @@ public sealed class PlayerService
     public async Task<Result<Player>> GetPlayerAsync(PlayerId id, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
+        if (player is null)
+            return Result<Player>.Fail(Errors.PlayerNotFound);
+
         player.CalculateOfflineProgress(DateTime.UtcNow);
-        return player is null
-            ? Result<Player>.Fail(Errors.PlayerNotFound)
-            : Result<Player>.Ok(player);
+
+        _repo.Update(player);
+        await _uow.SaveChangesAsync(ct);
+
+        return Result<Player>.Ok(player);
     }
 
     public async Task<Result<Player>> ClickAsync(PlayerId id, CancellationToken ct)
