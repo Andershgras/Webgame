@@ -1,21 +1,34 @@
 ﻿@page "/"
-@inject Api.ApiClient Api
-@inject Webgame.Blazor.State.PlayerSession Session
+@using Webgame.Blazor.Api
+@using Webgame.Blazor.State
+@using Webgame.Contracts.Players
+@using Webgame.Contracts.Upgrades
+
+@inject ApiClient Api
+@inject PlayerSession Session
 
 <h3>Webgame</h3>
 <p>Stored playerId: @_storedIdText</p>
 
 @if (_player is null)
 {
-    <button @onclick="Create">Create Player</button>
+    <h4>Create Player</h4>
+
+    <div style="margin-bottom:12px;">
+        <input @bind="_playerName" placeholder="Enter player name" />
+        <button @onclick="Create" disabled="@_isCreating" style="margin-left:8px;">
+            @(_isCreating ? "Creating..." : "Create Player")
+        </button>
+    </div>
 }
 else
 {
+    <p><b>Name:</b> @_player.Name</p>
     <p><b>Coins:</b> @_player.Coins</p>
     <p><b>Click Power:</b> @_player.ClickPower</p>
 
     <button @onclick="Click">Click</button>
-    <button @onclick="Tick">Tick</button>
+    <button @onclick="Tick" style="margin-left:8px;">Tick</button>
 
     <h4>Upgrades</h4>
     @foreach (var u in _upgrades)
@@ -25,18 +38,18 @@ else
             <button disabled="@(!u.CanAfford)" @onclick="() => Buy(u.Key)">Buy</button>
         </div>
     }
+
     <h5>Debug Upgrades</h5>
     @foreach (var u in _upgrades)
     {
         <div>
             <b>@u.Name</b> (lvl @u.CurrentLevel) – cost @u.NextCost
-
             <button disabled="@(!u.CanAfford)" @onclick="() => Buy(u.Key)">Buy</button>
-
             <button @onclick="() => Buy(u.Key)">Force buy (test)</button>
         </div>
     }
 }
+
 @if (!string.IsNullOrWhiteSpace(_error))
 {
     <div style="border:1px solid #f00; padding:12px; margin-bottom:12px;">
@@ -54,19 +67,26 @@ else
     private IReadOnlyList<UpgradeCatalogEntry> _upgrades = [];
     private string _storedIdText = "(not loaded)";
     private bool _loadedFromStorage;
+
+    private string _playerName = "";
+    private bool _isCreating;
+
     // Error handling
     private string? _error;
     private string? _traceId;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _loadedFromStorage) return;
+        if (!firstRender || _loadedFromStorage)
+            return;
 
         _loadedFromStorage = true;
 
         var storedId = await Session.GetPlayerIdAsync();
         _storedIdText = storedId?.ToString() ?? "(null)";
-        if (storedId is null) return;
+
+        if (storedId is null)
+            return;
 
         try
         {
@@ -77,21 +97,37 @@ else
         catch
         {
             await Session.ClearAsync();
+            _storedIdText = "(null)";
         }
     }
+
     private async Task Create()
     {
         ClearError();
 
+        if (string.IsNullOrWhiteSpace(_playerName))
+        {
+            _error = "Name is required.";
+            return;
+        }
+
+        _isCreating = true;
+
         try
         {
-            _player = await Api.CreatePlayerAsync("BlazorPlayer");
+            _player = await Api.CreatePlayerAsync(_playerName.Trim());
             await Session.SetPlayerIdAsync(_player.Id);
+            _storedIdText = _player.Id.ToString();
             await LoadUpgrades();
+            StateHasChanged();
         }
         catch (Exception ex)
         {
             SetError(ex);
+        }
+        finally
+        {
+            _isCreating = false;
         }
     }
 
@@ -133,11 +169,14 @@ else
 
     private async Task Buy(string key)
     {
+        if (_player is null)
+            return;
+
         ClearError();
 
         try
         {
-            var res = await Api.BuyUpgradeAsync(_player!.Id, key);
+            var res = await Api.BuyUpgradeAsync(_player.Id, key);
             _player = res.Player;
             await LoadUpgrades();
         }
@@ -149,9 +188,12 @@ else
 
     private async Task LoadUpgrades()
     {
-        _upgrades = await Api.GetUpgradesAsync(_player!.Id);
+        if (_player is null)
+            return;
+
+        _upgrades = await Api.GetUpgradesAsync(_player.Id);
     }
-    // Error handling
+
     private void ClearError()
     {
         _error = null;
@@ -160,7 +202,7 @@ else
 
     private void SetError(Exception ex)
     {
-        if (ex is Webgame.Blazor.Api.ApiException apiEx)
+        if (ex is ApiException apiEx)
         {
             _error = apiEx.UserMessage;
             _traceId = apiEx.Trace;
