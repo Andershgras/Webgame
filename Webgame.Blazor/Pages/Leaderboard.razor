@@ -1,0 +1,125 @@
+﻿@page "/leaderboard"
+@inject Webgame.Blazor.Api.ApiClient Api
+@inject Webgame.Blazor.State.PlayerSession Session
+
+<h3>Leaderboard</h3>
+
+<div style="margin-bottom:12px;">
+    <label>Top:</label>
+    <input type="number" min="1" max="100" @bind="_top" style="width:80px; margin-left:6px;" />
+    <button @onclick="Load" style="margin-left:8px;">Refresh</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div style="border:1px solid #f00; padding:12px; margin-bottom:12px;">
+        <b>Error:</b> @_error
+        @if (!string.IsNullOrWhiteSpace(_traceId))
+        {
+            <div style="opacity:0.7; font-size: 0.9em;">traceId: @_traceId</div>
+        }
+        <button @onclick="ClearError" style="margin-top:8px;">Dismiss</button>
+    </div>
+}
+
+@if (_loading)
+{
+    <p>Loading...</p>
+}
+else if (_entries.Count == 0)
+{
+    <p>No entries yet.</p>
+}
+else
+{
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr>
+                <th style="text-align:left; border-bottom:1px solid #ccc; padding:6px;">#</th>
+                <th style="text-align:left; border-bottom:1px solid #ccc; padding:6px;">Player</th>
+                <th style="text-align:right; border-bottom:1px solid #ccc; padding:6px;">Level</th>
+                <th style="text-align:right; border-bottom:1px solid #ccc; padding:6px;">Coins</th>
+                <th style="text-align:right; border-bottom:1px solid #ccc; padding:6px;">ClickPower</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (var i = 0; i < _entries.Count; i++)
+            {
+                var e = _entries[i];
+                var isMe = _myId is not null && e.PlayerId == _myId.Value;
+
+                <tr style="@(isMe ? "font-weight:700; background:#fff7d6;" : "")">
+                    <td style="padding:6px;">@(i + 1)</td>
+                    <td style="padding:6px;">
+                        @e.Name
+                        @if (isMe)
+                        {
+                            <span style="opacity:0.7; margin-left:6px;">(you)</span>
+                        }
+                    </td>
+                    <td style="padding:6px; text-align:right;">@e.Level</td>
+                    <td style="padding:6px; text-align:right;">@e.Coins</td>
+                    <td style="padding:6px; text-align:right;">@e.ClickPower</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private int _top = 10;
+    private bool _loading;
+
+    private Guid? _myId;
+    private IReadOnlyList<LeaderboardEntry> _entries = Array.Empty<LeaderboardEntry>();
+
+    private string? _error;
+    private string? _traceId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _myId = await Session.GetPlayerIdAsync();
+        await Load();
+        StateHasChanged();
+    }
+
+    private async Task Load()
+    {
+        ClearError();
+        _loading = true;
+
+        try
+        {
+            _entries = await Api.GetLeaderboardAsync(_top);
+        }
+        catch (Exception ex)
+        {
+            SetError(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ClearError()
+    {
+        _error = null;
+        _traceId = null;
+    }
+
+    private void SetError(Exception ex)
+    {
+        if (ex is Webgame.Blazor.Api.ApiException apiEx)
+        {
+            _error = apiEx.UserMessage;
+            _traceId = apiEx.Trace;
+            return;
+        }
+
+        _error = ex.Message;
+        _traceId = null;
+    }
+}

@@ -6,9 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Webgame.Contracts\Webgame.Contracts.csproj" />
-    <ProjectReference Include="..\Webgame.Domain\Webgame.Domain.csproj" />
-  </ItemGroup>
-
 </Project>

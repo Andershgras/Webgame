@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Webgame.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Webgame.Infrastructure.Persistence;
 namespace Webgame.Infrastructure.Migrations
 {
     [DbContext(typeof(WebgameDbContext))]
-    partial class WebgameDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260216105345_AddClickPowerLevel")]
+    partial class AddClickPowerLevel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,9 +47,6 @@ namespace Webgame.Infrastructure.Migrations
                             b1.Property<Guid>("PlayerId")
                                 .HasColumnType("uniqueidentifier");
 
-                            b1.Property<int>("AutoClickerLevel")
-                                .HasColumnType("int");
-
                             b1.Property<int>("ClickPower")
                                 .HasColumnType("int")
                                 .HasColumnName("ClickPower");
@@ -58,21 +58,9 @@ namespace Webgame.Infrastructure.Migrations
                                 .HasColumnType("bigint")
                                 .HasColumnName("Coins");
 
-                            b1.Property<int>("CoinsPerClickLevel")
-                                .HasColumnType("int");
-
                             b1.Property<int>("Level")
                                 .HasColumnType("int")
                                 .HasColumnName("Level");
-
-                            b1.Property<long>("TotalClicks")
-                                .HasColumnType("bigint");
-
-                            b1.Property<long>("TotalCoinsEarned")
-                                .HasColumnType("bigint");
-
-                            b1.Property<long>("TotalCoinsSpent")
-                                .HasColumnType("bigint");
 
                             b1.HasKey("PlayerId");
 

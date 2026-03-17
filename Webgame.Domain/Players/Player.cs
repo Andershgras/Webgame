@@ -33,6 +33,9 @@ public sealed class Player : Entity<PlayerId>
     }
     public void Click()
     {
+        Stats.RegisterClick();
+
+        var coinsGained = Stats.ClickPower;
         Stats.AddCoins(Stats.ClickPower);
     }
     public static bool TryCreate(string name, out Player? player)
@@ -56,18 +59,39 @@ public sealed class Player : Entity<PlayerId>
         Name = newName;
         return true;
     }
+    public long GetClickPowerUpgradeCost()
+    {
+        // Eksempel: 10, 20, 30, 40...
+        return 10L * Stats.ClickPowerLevel;
+    }
     public bool TryUpgradeClickPower(out long cost)
     {
-        // Pris skalerer med nuværende click power
-        // Eksempel: base 10, så 10, 20, 30, 40...
-        cost = 10L * Stats.ClickPower;
+        cost = GetClickPowerUpgradeCost();
 
-        // Payment
         if (!Stats.TrySpendCoins(cost))
             return false;
 
-        // Upgrade effect
-        Stats.IncreaseClickPower(1);
+        Stats.UpgradeClickPower();
         return true;
+    }
+    public long GetAutoClickerUpgradeCost()
+    {
+        // 100, 200, 300...
+        return 100L * (Stats.AutoClickerLevel + 1);
+    }
+
+    public bool TryUpgradeAutoClicker(out long cost)
+    {
+        cost = GetAutoClickerUpgradeCost();
+        if (!Stats.TrySpendCoins(cost)) return false;
+
+        Stats.UpgradeAutoClicker();
+        return true;
+    }
+    public void Tick()
+    {
+        var coins = Stats.AutoCoinsPerTick;
+        if (coins > 0)
+            Stats.AddCoins(coins);
     }
 }

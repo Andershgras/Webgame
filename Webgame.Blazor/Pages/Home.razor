@@ -1,0 +1,173 @@
+﻿@page "/"
+@inject Api.ApiClient Api
+@inject Webgame.Blazor.State.PlayerSession Session
+
+<h3>Webgame</h3>
+<p>Stored playerId: @_storedIdText</p>
+
+@if (_player is null)
+{
+    <button @onclick="Create">Create Player</button>
+}
+else
+{
+    <p><b>Coins:</b> @_player.Coins</p>
+    <p><b>Click Power:</b> @_player.ClickPower</p>
+
+    <button @onclick="Click">Click</button>
+    <button @onclick="Tick">Tick</button>
+
+    <h4>Upgrades</h4>
+    @foreach (var u in _upgrades)
+    {
+        <div>
+            <b>@u.Name</b> (lvl @u.CurrentLevel) – cost @u.NextCost
+            <button disabled="@(!u.CanAfford)" @onclick="() => Buy(u.Key)">Buy</button>
+        </div>
+    }
+    <h5>Debug Upgrades</h5>
+    @foreach (var u in _upgrades)
+    {
+        <div>
+            <b>@u.Name</b> (lvl @u.CurrentLevel) – cost @u.NextCost
+
+            <button disabled="@(!u.CanAfford)" @onclick="() => Buy(u.Key)">Buy</button>
+
+            <button @onclick="() => Buy(u.Key)">Force buy (test)</button>
+        </div>
+    }
+}
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div style="border:1px solid #f00; padding:12px; margin-bottom:12px;">
+        <b>Error:</b> @_error
+        @if (!string.IsNullOrWhiteSpace(_traceId))
+        {
+            <div style="opacity:0.7; font-size: 0.9em;">traceId: @_traceId</div>
+        }
+        <button @onclick="ClearError" style="margin-top:8px;">Dismiss</button>
+    </div>
+}
+
+@code {
+    private PlayerResponse? _player;
+    private IReadOnlyList<UpgradeCatalogEntry> _upgrades = [];
+    private string _storedIdText = "(not loaded)";
+    private bool _loadedFromStorage;
+    // Error handling
+    private string? _error;
+    private string? _traceId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _loadedFromStorage) return;
+
+        _loadedFromStorage = true;
+
+        var storedId = await Session.GetPlayerIdAsync();
+        _storedIdText = storedId?.ToString() ?? "(null)";
+        if (storedId is null) return;
+
+        try
+        {
+            _player = await Api.GetPlayerAsync(storedId.Value);
+            await LoadUpgrades();
+            StateHasChanged();
+        }
+        catch
+        {
+            await Session.ClearAsync();
+        }
+    }
+    private async Task Create()
+    {
+        ClearError();
+
+        try
+        {
+            _player = await Api.CreatePlayerAsync("BlazorPlayer");
+            await Session.SetPlayerIdAsync(_player.Id);
+            await LoadUpgrades();
+        }
+        catch (Exception ex)
+        {
+            SetError(ex);
+        }
+    }
+
+    private async Task Click()
+    {
+        if (_player is null)
+            return;
+
+        ClearError();
+
+        try
+        {
+            _player = await Api.ClickAsync(_player.Id);
+            await LoadUpgrades();
+        }
+        catch (Exception ex)
+        {
+            SetError(ex);
+        }
+    }
+
+    private async Task Tick()
+    {
+        if (_player is null)
+            return;
+
+        ClearError();
+
+        try
+        {
+            _player = await Api.TickAsync(_player.Id);
+            await LoadUpgrades();
+        }
+        catch (Exception ex)
+        {
+            SetError(ex);
+        }
+    }
+
+    private async Task Buy(string key)
+    {
+        ClearError();
+
+        try
+        {
+            var res = await Api.BuyUpgradeAsync(_player!.Id, key);
+            _player = res.Player;
+            await LoadUpgrades();
+        }
+        catch (Exception ex)
+        {
+            SetError(ex);
+        }
+    }
+
+    private async Task LoadUpgrades()
+    {
+        _upgrades = await Api.GetUpgradesAsync(_player!.Id);
+    }
+    // Error handling
+    private void ClearError()
+    {
+        _error = null;
+        _traceId = null;
+    }
+
+    private void SetError(Exception ex)
+    {
+        if (ex is Webgame.Blazor.Api.ApiException apiEx)
+        {
+            _error = apiEx.UserMessage;
+            _traceId = apiEx.Trace;
+            return;
+        }
+
+        _error = ex.Message;
+        _traceId = null;
+    }
+}

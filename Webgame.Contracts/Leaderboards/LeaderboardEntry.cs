@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Webgame.Application.Leaderboards;
+namespace Webgame.Contracts.Leaderboards;
 
 public sealed record LeaderboardEntry(
     Guid PlayerId,
