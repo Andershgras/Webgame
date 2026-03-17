@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Webgame.Application.Common;
-using Webgame.Contracts.Leaderboards;
 using Webgame.Application.Leaderboards;
+using Webgame.Contracts.Leaderboards;
 using Webgame.Infrastructure.Persistence;
 
 namespace Webgame.Infrastructure.Leaderboards;
@@ -19,17 +14,42 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
     {
         _db = db;
     }
-    // Get top N players sorted by Level, then Coins, then ClickPower
-    public async Task<Result<IReadOnlyList<LeaderboardEntry>>> GetTopAsync(int top, CancellationToken ct)
+
+    public async Task<Result<IReadOnlyList<LeaderboardEntry>>> GetTopAsync(int top, string type, CancellationToken ct)
     {
         if (top is < 1 or > 100)
             return Result<IReadOnlyList<LeaderboardEntry>>.Fail(Errors.InvalidTop);
 
-        var list = await _db.Players
+        type = string.IsNullOrWhiteSpace(type) ? "Coins" : type.Trim();
+
+        var query = _db.Players
             .AsNoTracking()
-            .OrderByDescending(p => p.Stats.Level)
-            .ThenByDescending(p => p.Stats.Coins)
-            .ThenByDescending(p => p.Stats.ClickPower)
+            .AsQueryable();
+
+        query = type switch
+        {
+            "Coins" => query
+                .OrderByDescending(p => p.Stats.Coins)
+                .ThenByDescending(p => p.Stats.Level)
+                .ThenByDescending(p => p.Stats.ClickPower),
+
+            "ClickPower" => query
+                .OrderByDescending(p => p.Stats.ClickPower)
+                .ThenByDescending(p => p.Stats.Level)
+                .ThenByDescending(p => p.Stats.Coins),
+
+            "Level" => query
+                .OrderByDescending(p => p.Stats.Level)
+                .ThenByDescending(p => p.Stats.Coins)
+                .ThenByDescending(p => p.Stats.ClickPower),
+
+            _ => query
+                .OrderByDescending(p => p.Stats.Coins)
+                .ThenByDescending(p => p.Stats.Level)
+                .ThenByDescending(p => p.Stats.ClickPower)
+        };
+
+        var list = await query
             .Take(top)
             .Select(p => new LeaderboardEntry(
                 p.Id.Value,
@@ -42,4 +62,3 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
         return Result<IReadOnlyList<LeaderboardEntry>>.Ok(list);
     }
 }
-

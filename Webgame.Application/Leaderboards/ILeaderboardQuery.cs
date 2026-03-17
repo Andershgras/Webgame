@@ -10,6 +10,6 @@ namespace Webgame.Application.Leaderboards;
 
 public interface ILeaderboardQuery
 {
-    Task<Result<IReadOnlyList<LeaderboardEntry>>> GetTopAsync(int top, CancellationToken ct);
+    Task<Result<IReadOnlyList<LeaderboardEntry>>> GetTopAsync(int top, string type, CancellationToken ct);
 }
 

@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using System.Net.Http.Json;
 using Webgame.Contracts.Leaderboards;
 using Webgame.Contracts.Players;
 using Webgame.Contracts.Upgrades;
@@ -15,6 +14,7 @@ public sealed class ApiClient
     {
         _http = http;
     }
+
     public async Task<PlayerResponse> CreatePlayerAsync(string name)
     {
         var res = await _http.PostAsJsonAsync("api/players", new { name });
@@ -50,6 +50,13 @@ public sealed class ApiClient
         var res = await _http.PostAsync($"api/players/{id}/upgrades/{key}/buy", null);
         return await ReadOrThrowAsync<UpgradePurchaseResponse>(res);
     }
+
+    public async Task<IReadOnlyList<LeaderboardEntry>> GetLeaderboardAsync(int top = 10, string type = "Coins")
+    {
+        var res = await _http.GetAsync($"api/leaderboard?top={top}&type={Uri.EscapeDataString(type)}");
+        return await ReadOrThrowAsync<IReadOnlyList<LeaderboardEntry>>(res);
+    }
+
     private async Task<T> ReadOrThrowAsync<T>(HttpResponseMessage res)
     {
         if (res.IsSuccessStatusCode)
@@ -70,10 +77,5 @@ public sealed class ApiClient
         }
 
         throw new ApiException(res.StatusCode, problem);
-    }
-    public async Task<IReadOnlyList<LeaderboardEntry>> GetLeaderboardAsync(int top = 10)
-    {
-        var res = await _http.GetAsync($"api/leaderboard?top={top}");
-        return await ReadOrThrowAsync<IReadOnlyList<LeaderboardEntry>>(res);
     }
 }

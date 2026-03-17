@@ -4,10 +4,25 @@
 
 <h3>Leaderboard</h3>
 
-<div style="margin-bottom:12px;">
-    <label>Top:</label>
-    <input type="number" min="1" max="100" @bind="_top" style="width:80px; margin-left:6px;" />
-    <button @onclick="Load" style="margin-left:8px;">Refresh</button>
+<div style="margin-bottom:12px; display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
+    <div>
+        <label>Leaderboard:</label><br />
+        <select @bind="_selectedType" style="min-width:220px;">
+            @foreach (var option in _options)
+            {
+                <option value="@option.Value">@option.Label</option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <label>Top:</label><br />
+        <input type="number" min="1" max="100" @bind="_top" style="width:80px;" />
+    </div>
+
+    <div>
+        <button @onclick="Load">Refresh</button>
+    </div>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(_error))
@@ -16,7 +31,7 @@
         <b>Error:</b> @_error
         @if (!string.IsNullOrWhiteSpace(_traceId))
         {
-            <div style="opacity:0.7; font-size: 0.9em;">traceId: @_traceId</div>
+            <div style="opacity:0.7; font-size:0.9em;">traceId: @_traceId</div>
         }
         <button @onclick="ClearError" style="margin-top:8px;">Dismiss</button>
     </div>
@@ -76,6 +91,15 @@ else
     private string? _error;
     private string? _traceId;
 
+    private string _selectedType = LeaderboardType.Coins.ToString();
+
+    private readonly List<LeaderboardOption> _options =
+    [
+        new(LeaderboardType.Coins.ToString(), "Most Coins"),
+        new(LeaderboardType.ClickPower.ToString(), "Highest Click Power"),
+        new(LeaderboardType.Level.ToString(), "Highest Level"),
+    ];
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -92,7 +116,7 @@ else
 
         try
         {
-            _entries = await Api.GetLeaderboardAsync(_top);
+            _entries = await Api.GetLeaderboardAsync(_top, _selectedType);
         }
         catch (Exception ex)
         {
@@ -121,5 +145,14 @@ else
 
         _error = ex.Message;
         _traceId = null;
+    }
+
+    private sealed record LeaderboardOption(string Value, string Label);
+
+    private enum LeaderboardType
+    {
+        Coins,
+        ClickPower,
+        Level,
     }
 }

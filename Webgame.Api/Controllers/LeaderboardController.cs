@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Webgame.Api.Common;
-using Webgame.Contracts.Leaderboards;
 using Webgame.Application.Leaderboards;
+using Webgame.Contracts.Leaderboards;
 
 namespace Webgame.Api.Controllers;
 
@@ -17,9 +17,12 @@ public sealed class LeaderboardController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<LeaderboardEntry>>> Get([FromQuery] int top = 10, CancellationToken ct = default)
+    public async Task<ActionResult<IReadOnlyList<LeaderboardEntry>>> Get(
+        [FromQuery] int top = 10,
+        [FromQuery] string type = "Coins",
+        CancellationToken ct = default)
     {
-        var result = await _query.GetTopAsync(top, ct);
+        var result = await _query.GetTopAsync(top, type, ct);
 
         return ResultToHttp.ToActionResult<IReadOnlyList<LeaderboardEntry>, IReadOnlyList<LeaderboardEntry>>(
             this,
@@ -28,4 +31,3 @@ public sealed class LeaderboardController : ControllerBase
             dto => Ok(dto));
     }
 }
-
