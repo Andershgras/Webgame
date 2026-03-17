@@ -1,3 +1,41 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager Nav
 
-@Body
+<div style="padding:10px; border-bottom:1px solid #ccc; margin-bottom:20px;">
+    <button @onclick='() => NavigateTo("/")'
+            style='@GetButtonStyle("/")'>
+        Hjem
+    </button>
+
+    <button @onclick='() => NavigateTo("/leaderboard")'
+            style='@GetButtonStyle("/leaderboard")'>
+        Leaderboard
+    </button>
+</div>
+
+<div class="content px-4">
+    @Body
+</div>
+
+@code {
+    private void NavigateTo(string url)
+    {
+        Nav.NavigateTo(url);
+    }
+
+    private string GetButtonStyle(string url)
+    {
+        var current = Nav.ToBaseRelativePath(Nav.Uri);
+
+        if (string.IsNullOrWhiteSpace(current))
+            current = "/";
+
+        current = "/" + current.TrimStart('/');
+
+        bool isActive = string.Equals(current, url, StringComparison.OrdinalIgnoreCase);
+
+        return isActive
+            ? "margin-right:10px; font-weight:bold; background-color:#ddd;"
+            : "margin-right:10px;";
+    }
+}
