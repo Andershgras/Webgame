@@ -23,10 +23,12 @@ public sealed class EfPlayerRepository : IPlayerRepository
     {
         await _db.Players.AddAsync(player, ct);
     }
-
+    public async Task<bool> ExistsByNameAsync(string name, CancellationToken ct)
+    {
+        return await _db.Players.AnyAsync(p => p.Name == name, ct);
+    }
     public Task<Player?> GetByIdAsync(PlayerId id, CancellationToken ct)
     {
-        // Tracked entity – ændringer bliver opdaget af EF (men vi kalder Update eksplicit for pædagogik nu)
         return _db.Players.FirstOrDefaultAsync(p => p.Id == id, ct);
     }
 

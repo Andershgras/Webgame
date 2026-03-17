@@ -11,7 +11,7 @@ public interface IPlayerRepository
 {
     Task AddAsync(Player player, CancellationToken ct);
     Task<Player?> GetByIdAsync(PlayerId id, CancellationToken ct);
-
+    Task<bool> ExistsByNameAsync(string name, CancellationToken ct);
     void Update(Player player);
     void Remove(Player player);
 }

@@ -26,6 +26,10 @@ public sealed class PlayerService
         if (!Player.TryCreate(name, out var player) || player is null)
             return Result<Player>.Fail(Errors.InvalidName);
 
+        var exists = await _repo.ExistsByNameAsync(player.Name, ct);
+        if (exists)
+            return Result<Player>.Fail(Errors.PlayerNameAlreadyExists);
+
         await _repo.AddAsync(player, ct);
         await _uow.SaveChangesAsync(ct);
 
@@ -43,7 +47,8 @@ public sealed class PlayerService
     public async Task<Result<Player>> ClickAsync(PlayerId id, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
-        if (player is null) return Result<Player>.Fail(Errors.PlayerNotFound);
+        if (player is null)
+            return Result<Player>.Fail(Errors.PlayerNotFound);
 
         player.Click();
         _repo.Update(player);

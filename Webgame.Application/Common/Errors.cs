@@ -26,6 +26,8 @@ public static class Errors
     public static readonly Error InvalidUpgradeKey =
         new("upgrade.invalid_key", "Unknown upgrade key.", ErrorType.Validation);
 
+    public static readonly Error PlayerNameAlreadyExists =
+        new("player.name_already_exists", "A player with this name already exists.", ErrorType.Conflict);
 }
 
 
