@@ -39,20 +39,6 @@ else
             <button disabled="@(!u.CanAfford || _isBusy)" @onclick="() => Buy(u.Key)">Buy</button>
         </div>
     }
-
-    <h5>Debug Upgrades</h5>
-    @foreach (var u in _upgrades)
-    {
-        <div>
-            <b>@u.Name</b> (lvl @u.CurrentLevel) – cost @u.NextCost
-            <button disabled="@(!u.CanAfford || _isBusy)" @onclick="() => Buy(u.Key)">Buy</button>
-            <button disabled="@_isBusy" @onclick="() => Buy(u.Key)">Force buy (test)</button>
-        </div>
-    }
-
-    <div style="margin-top:12px;">
-        <button @onclick="ClearPlayer">Clear saved player</button>
-    </div>
 }
 
 @if (!string.IsNullOrWhiteSpace(_error))
@@ -253,20 +239,6 @@ else
         catch (OperationCanceledException)
         {
         }
-    }
-
-    private async Task ClearPlayer()
-    {
-        StopAutoTick();
-
-        await Session.ClearAsync();
-        _player = null;
-        _upgrades = [];
-        _storedIdText = "(null)";
-        _playerName = "";
-        ClearError();
-
-        await InvokeAsync(StateHasChanged);
     }
 
     private void StopAutoTick()
