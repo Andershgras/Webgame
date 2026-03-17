@@ -27,7 +27,8 @@ else
     <p><b>Name:</b> @_player.Name</p>
     <p><b>Coins:</b> @_player.Coins</p>
     <p><b>Click Power:</b> @_player.ClickPower</p>
-    <p><b>Clicks Per Second:</b> @_player.AutoClickerLevel</p>
+    <p><b>Clicks Per Second:</b> @_player.ClicksPerSecond</p>
+    <p><b>Offline Cap:</b> @(_player.OfflineCapSeconds / 60) min</p>
 
     <button @onclick="Click" disabled="@_isBusy">Click</button>
 
@@ -40,7 +41,14 @@ else
         </div>
     }
 }
-
+@if (_player is not null && _player.OfflineCoinsEarned > 0)
+{
+    <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+        <b>Offline Progress:</b><br />
+        You earned @_player.OfflineCoinsEarned coins<br />
+        over @(_player.OfflineSecondsApplied / 60) minute(s)
+    </div>
+}
 @if (!string.IsNullOrWhiteSpace(_error))
 {
     <div style="border:1px solid #f00; padding:12px; margin-bottom:12px;">

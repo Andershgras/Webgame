@@ -29,7 +29,7 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
 
         var cost = player.GetClickPowerUpgradeCost();
         var autoCost = player.GetAutoClickerUpgradeCost();
-
+        var offlineCost = player.GetOfflineCapUpgradeCost();
         IReadOnlyList<UpgradeCatalogEntry> list = new List<UpgradeCatalogEntry>
         {
             new(
@@ -47,7 +47,15 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
                 NextCost: autoCost,
                 EffectDescription: $"+1 coin per tick (now {player.Stats.AutoCoinsPerTick}/tick)",
                 CanAfford: player.Stats.Coins >= autoCost
-            )
+            ),
+            new(
+                Key: "offline_cap",
+                Name: "Offline Cap",
+                CurrentLevel: player.Stats.OfflineCapLevel,
+                NextCost: offlineCost,
+                EffectDescription: $"+30 min offline cap (now {player.Stats.OfflineCapSeconds / 60} min)",
+                CanAfford: player.Stats.Coins >= offlineCost
+            ),
         };
 
         return Result<IReadOnlyList<UpgradeCatalogEntry>>.Ok(list);

@@ -39,6 +39,7 @@ public sealed class PlayerService
     public async Task<Result<Player>> GetPlayerAsync(PlayerId id, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
+        player.CalculateOfflineProgress(DateTime.UtcNow);
         return player is null
             ? Result<Player>.Fail(Errors.PlayerNotFound)
             : Result<Player>.Ok(player);
@@ -51,6 +52,7 @@ public sealed class PlayerService
             return Result<Player>.Fail(Errors.PlayerNotFound);
 
         player.Click();
+        player.Touch();
         _repo.Update(player);
         await _uow.SaveChangesAsync(ct);
 
@@ -90,6 +92,11 @@ public sealed class PlayerService
                 newLevel = player.Stats.AutoClickerLevel;
             break;
 
+            case "offline_cap":
+                success = player.TryUpgradeOfflineCap(out cost);
+                newLevel = player.Stats.OfflineCapLevel;
+                break;
+
             default:
                 return Result<UpgradePurchaseResult>.Fail(Errors.InvalidUpgradeKey);
     }
@@ -98,6 +105,7 @@ public sealed class PlayerService
         return Result<UpgradePurchaseResult>.Fail(Errors.NotEnoughCoins);
 
     _repo.Update(player);
+    player.Touch();
     await _uow.SaveChangesAsync(ct);
 
     return Result<UpgradePurchaseResult>.Ok(new UpgradePurchaseResult(key, cost, newLevel, player));
@@ -109,7 +117,7 @@ public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
         if (player is null) return Result<Player>.Fail(Errors.PlayerNotFound);
 
         player.Tick();
-
+        player.Touch();
         _repo.Update(player);
         await _uow.SaveChangesAsync(ct);
 

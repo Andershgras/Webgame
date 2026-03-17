@@ -22,6 +22,16 @@ public sealed class Stats
     public int ClickPowerLevel { get; private set; } = 1;
     public int AutoClickerLevel { get; private set; } = 0;
 
+    // Offline progress
+    public int OfflineCapLevel { get; private set; } = 0;
+
+    public int OfflineCapSeconds => 3600 + (OfflineCapLevel * 1800);
+
+    public void UpgradeOfflineCap()
+    {
+        OfflineCapLevel++;
+    }
+
     // Helpers
     public int AutoCoinsPerTick => AutoClickerLevel;
     public void UpgradeAutoClicker() => AutoClickerLevel++;

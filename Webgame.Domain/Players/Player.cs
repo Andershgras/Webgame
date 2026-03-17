@@ -11,7 +11,10 @@ public sealed class Player : Entity<PlayerId>
     private Player() : base() { } // EF Core
     public string Name { get; private set; }
     public Stats Stats { get; private set; }
-
+    //Offline progress
+    public DateTime LastActiveUtc { get; private set; } = DateTime.UtcNow;
+    private long _pendingOfflineCoins;
+    private int _pendingOfflineSeconds;
     public Player(PlayerId id, string name) : base(id)
     {
         Name = ValidateName(name);
@@ -59,11 +62,13 @@ public sealed class Player : Entity<PlayerId>
         Name = newName;
         return true;
     }
+
     public long GetClickPowerUpgradeCost()
     {
         // Eksempel: 10, 20, 30, 40...
         return 10L * Stats.ClickPowerLevel;
     }
+
     public bool TryUpgradeClickPower(out long cost)
     {
         cost = GetClickPowerUpgradeCost();
@@ -74,6 +79,7 @@ public sealed class Player : Entity<PlayerId>
         Stats.UpgradeClickPower();
         return true;
     }
+
     public long GetAutoClickerUpgradeCost()
     {
         // 100, 200, 300...
@@ -88,10 +94,63 @@ public sealed class Player : Entity<PlayerId>
         Stats.UpgradeAutoClicker();
         return true;
     }
+
     public void Tick()
     {
         var coins = Stats.AutoCoinsPerTick;
         if (coins > 0)
             Stats.AddCoins(coins);
+    }
+    public void CalculateOfflineProgress(DateTime nowUtc)
+    {
+        if (nowUtc <= LastActiveUtc)
+        {
+            LastActiveUtc = nowUtc;
+            return;
+        }
+
+        var elapsedSeconds = (int)Math.Floor((nowUtc - LastActiveUtc).TotalSeconds);
+        var cappedSeconds = Math.Min(elapsedSeconds, Stats.OfflineCapSeconds);
+
+        if (cappedSeconds > 0 && Stats.AutoCoinsPerTick > 0)
+        {
+            var coins = (long)cappedSeconds * Stats.AutoCoinsPerTick;
+
+            Stats.AddCoins(coins);
+
+            _pendingOfflineCoins = coins;
+            _pendingOfflineSeconds = cappedSeconds;
+        }
+
+        LastActiveUtc = nowUtc;
+    }
+    public (long CoinsEarned, int SecondsApplied) ConsumeOfflineProgress()
+    {
+        var result = (_pendingOfflineCoins, _pendingOfflineSeconds);
+
+        _pendingOfflineCoins = 0;
+        _pendingOfflineSeconds = 0;
+
+        return result;
+    }
+
+    public void Touch()
+    {
+        LastActiveUtc = DateTime.UtcNow;
+    }
+    public long GetOfflineCapUpgradeCost()
+    {
+        return 500L * (Stats.OfflineCapLevel + 1);
+    }
+
+    public bool TryUpgradeOfflineCap(out long cost)
+    {
+        cost = GetOfflineCapUpgradeCost();
+
+        if (!Stats.TrySpendCoins(cost))
+            return false;
+
+        Stats.UpgradeOfflineCap();
+        return true;
     }
 }

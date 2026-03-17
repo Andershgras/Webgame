@@ -14,6 +14,12 @@ public sealed record PlayerResponse(
     int ClickPower,
     int ClickPowerLevel,
     int AutoClickerLevel,
+
+    int ClicksPerSecond,
+    int OfflineCapSeconds,
+    long OfflineCoinsEarned,
+    int OfflineSecondsApplied,
+
     long TotalClicks,
     long TotalCoinsEarned,
     long TotalCoinsSpent
