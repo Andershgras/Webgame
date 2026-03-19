@@ -10,8 +10,11 @@
 @inject PlayerSession Session
 @inject PlayerUiState PlayerUiState
 
-<h3>Webgame</h3>
-<p>Auth token stored: @_tokenStatus</p>
+@if (_player is null)
+{
+    <h3>Webgame</h3>
+    <p>Auth token stored: @_tokenStatus</p>
+}
 
 @if (_player is null)
 {
@@ -37,20 +40,49 @@
 }
 else
 {
-    <p><b>Click Power:</b> @_player.ClickPower</p>
-    <p><b>Clicks Per Second:</b> @_player.ClicksPerSecond</p>
-    <p><b>Offline Cap:</b> @(_player.OfflineCapSeconds / 60) min</p>
+    <div style="display:flex; justify-content:center; margin-top:30px;">
+        <div style="width:100%; max-width:900px; text-align:center;">
 
-    <button @onclick="Click" disabled="@_isBusy">Click</button>
+            <h1 style="margin-bottom:10px;">Webgame</h1>
 
-    <h4>Upgrades</h4>
-    @foreach (var u in _upgrades)
-    {
-        <div>
-            <b>@u.Name</b> (lvl @u.CurrentLevel) – cost @u.NextCost
-            <button disabled="@(!u.CanAfford || _isBusy)" @onclick="() => Buy(u.Key)">Buy</button>
+            <p style="margin:6px 0;">
+                <b>Coins:</b> @_player.Coins
+            </p>
+
+            <p style="margin:6px 0 24px 0;">
+                <b>CPS:</b> @_player.ClicksPerSecond
+            </p>
+
+            <button @onclick="Click"
+                    disabled="@_isBusy"
+                    style="width:180px; height:180px; border-radius:50%; font-size:24px; margin-bottom:30px;">
+                Click
+            </button>
+
+            <div style="margin:0 auto; max-width:500px; text-align:left;">
+                <h3 style="text-align:center; margin-bottom:12px;">Upgrades</h3>
+
+                <div style="max-height:260px; overflow-y:auto; border:1px solid #ccc; padding:12px;">
+                    @foreach (var u in _upgrades)
+                    {
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px;">
+                            <div>
+                                <div><b>@u.Name</b></div>
+                                <div>Level: @u.CurrentLevel</div>
+                                <div>Cost: @u.NextCost</div>
+                            </div>
+
+                            <button disabled="@(!u.CanAfford || _isBusy)"
+                                    @onclick="() => Buy(u.Key)">
+                                Buy
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+
         </div>
-    }
+    </div>
 }
 
 @if (_showOfflineReward)
