@@ -1,18 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Webgame.Api.Common;
 using Webgame.Application.Players;
 using Webgame.Application.Upgrades;
-using Webgame.Contracts.Upgrades;
 using Webgame.Contracts.Players;
+using Webgame.Contracts.Upgrades;
+using Webgame.Domain.Players;
 
 namespace Webgame.Api.Controllers;
 
 [ApiController]
-[Route("api/players/{playerId:guid}/upgrades")]
+[Route("api/players/me/upgrades")]
+[Authorize]
 public sealed class UpgradesController : ControllerBase
 {
     private readonly IUpgradeCatalogQuery _query;
     private readonly PlayerService _players;
+
     public UpgradesController(IUpgradeCatalogQuery query, PlayerService players)
     {
         _query = query;
@@ -20,9 +25,13 @@ public sealed class UpgradesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<UpgradeCatalogEntry>>> Get(Guid playerId, CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<UpgradeCatalogEntry>>> Get(CancellationToken ct)
     {
-        var result = await _query.GetForPlayerAsync(playerId, ct);
+        var playerId = GetPlayerIdFromToken();
+        if (playerId is null)
+            return Unauthorized();
+
+        var result = await _query.GetForPlayerAsync(playerId.Value.Value, ct);
 
         return ResultToHttp.ToActionResult<
             IReadOnlyList<UpgradeCatalogEntry>,
@@ -32,10 +41,15 @@ public sealed class UpgradesController : ControllerBase
             x => x,
             dto => Ok(dto));
     }
+
     [HttpPost("{key}/buy")]
-    public async Task<ActionResult<UpgradePurchaseResponse>> Buy(Guid playerId, string key, CancellationToken ct)
+    public async Task<ActionResult<UpgradePurchaseResponse>> Buy(string key, CancellationToken ct)
     {
-        var result = await _players.BuyUpgradeAsync(new Webgame.Domain.Players.PlayerId(playerId), key, ct);
+        var playerId = GetPlayerIdFromToken();
+        if (playerId is null)
+            return Unauthorized();
+
+        var result = await _players.BuyUpgradeAsync(playerId.Value, key, ct);
 
         return ResultToHttp.ToActionResult<Webgame.Application.Upgrades.UpgradePurchaseResult, UpgradePurchaseResponse>(
             this,
@@ -46,8 +60,18 @@ public sealed class UpgradesController : ControllerBase
                 r.NewLevel,
                 PlayerMappings.ToResponse(r.Player)
             ),
-            dto => Ok(dto)
-        );
+            dto => Ok(dto));
+    }
+
+    private PlayerId? GetPlayerIdFromToken()
+    {
+        var claimValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(claimValue, out var id))
+            return null;
+
+        return new PlayerId(id);
     }
 }
-

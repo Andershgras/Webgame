@@ -266,7 +266,7 @@ else
 
         try
         {
-            var res = await Api.BuyUpgradeAsync(_player.Id, key);
+            var res = await Api.BuyUpgradeAsync(key);
             _player = res.Player;
             await LoadUpgrades();
         }
@@ -285,7 +285,7 @@ else
         if (_player is null)
             return;
 
-        _upgrades = await Api.GetUpgradesAsync(_player.Id);
+        _upgrades = await Api.GetUpgradesAsync();
     }
 
     private async Task HandleOfflineRewardAsync()

@@ -32,12 +32,6 @@ public sealed class ApiClient
         return await ReadOrThrowAsync<PlayerResponse>(res);
     }
 
-    // Backward-compatible wrapper for old pages still calling GetPlayerAsync(id)
-    public Task<PlayerResponse> GetPlayerAsync(Guid id)
-    {
-        return GetMeAsync();
-    }
-
     public async Task<PlayerResponse> ClickAsync()
     {
         var res = await _http.PostAsync("api/players/me/click", null);
@@ -57,15 +51,15 @@ public sealed class ApiClient
             await ReadOrThrowAsync<object>(res);
     }
 
-    public async Task<IReadOnlyList<UpgradeCatalogEntry>> GetUpgradesAsync(Guid playerId)
+    public async Task<IReadOnlyList<UpgradeCatalogEntry>> GetUpgradesAsync()
     {
-        var res = await _http.GetAsync($"api/players/{playerId}/upgrades");
+        var res = await _http.GetAsync("api/players/me/upgrades");
         return await ReadOrThrowAsync<IReadOnlyList<UpgradeCatalogEntry>>(res);
     }
 
-    public async Task<UpgradePurchaseResponse> BuyUpgradeAsync(Guid playerId, string key)
+    public async Task<UpgradePurchaseResponse> BuyUpgradeAsync(string key)
     {
-        var res = await _http.PostAsync($"api/players/{playerId}/upgrades/{key}/buy", null);
+        var res = await _http.PostAsync($"api/players/me/upgrades/{key}/buy", null);
         return await ReadOrThrowAsync<UpgradePurchaseResponse>(res);
     }
 
