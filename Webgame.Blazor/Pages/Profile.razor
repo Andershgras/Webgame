@@ -1,4 +1,4 @@
-﻿@page "/stats"
+﻿@page "/profile"
 @using System.Net
 @using Webgame.Blazor.Api
 @using Webgame.Blazor.State
@@ -6,8 +6,10 @@
 
 @inject ApiClient Api
 @inject PlayerSession Session
+@inject NavigationManager Nav
+@inject PlayerUiState PlayerUiState
 
-<h3>Stats</h3>
+<h3>Profile</h3>
 
 @if (_loading)
 {
@@ -20,9 +22,18 @@ else if (_player is null)
 else
 {
     <p><b>Name:</b> @_player.Name</p>
+    <p><b>Level:</b> @_player.Level</p>
+    <p><b>Coins:</b> @_player.Coins</p>
+    <p><b>Click Power:</b> @_player.ClickPower</p>
+    <p><b>Clicks Per Second:</b> @_player.ClicksPerSecond</p>
+    <p><b>Offline Cap:</b> @(_player.OfflineCapSeconds / 60) min</p>
+
+    <h4>Lifetime Stats</h4>
     <p><b>Total Clicks:</b> @_player.TotalClicks</p>
     <p><b>Total Coins Earned:</b> @_player.TotalCoinsEarned</p>
     <p><b>Total Coins Spent:</b> @_player.TotalCoinsSpent</p>
+
+    <button @onclick="Logout">Logout</button>
 }
 
 @if (!string.IsNullOrWhiteSpace(_error))
@@ -44,12 +55,14 @@ else
         try
         {
             _player = await Api.GetMeAsync();
+            PlayerUiState.SetPlayer(_player);
         }
         catch (Exception ex)
         {
             if (ex is ApiException apiEx && apiEx.StatusCode == HttpStatusCode.Unauthorized)
             {
                 await Session.ClearAsync();
+                PlayerUiState.Clear();
                 _error = "Your session expired. Please log in again.";
             }
             else
@@ -61,5 +74,12 @@ else
         {
             _loading = false;
         }
+    }
+
+    private async Task Logout()
+    {
+        await Session.ClearAsync();
+        PlayerUiState.Clear();
+        Nav.NavigateTo("/", forceLoad: false);
     }
 }
