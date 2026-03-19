@@ -15,10 +15,20 @@ public sealed class ApiException : Exception
     }
 
     public string UserMessage =>
-        Problem?.Detail
-        ?? Problem?.Title
-        ?? $"Request failed ({(int)StatusCode}).";
+        StatusCode == HttpStatusCode.Unauthorized
+            ? "Your session expired. Please log in again."
+            : Problem?.Detail
+            ?? Problem?.Title
+            ?? $"Request failed ({(int)StatusCode}).";
 
     public string Trace =>
         Problem?.TraceId ?? "(no traceId)";
+
+    public string StatusText =>
+        $"{(int)StatusCode} {StatusCode}";
+
+    public override string ToString()
+    {
+        return $"{StatusText}: {UserMessage} (trace: {Trace})";
+    }
 }

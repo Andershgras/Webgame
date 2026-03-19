@@ -1,8 +1,11 @@
 ﻿@page "/stats"
+@using System.Net
 @using Webgame.Blazor.Api
+@using Webgame.Blazor.State
 @using Webgame.Contracts.Players
 
 @inject ApiClient Api
+@inject PlayerSession Session
 
 <h3>Stats</h3>
 
@@ -44,7 +47,15 @@ else
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            if (ex is ApiException apiEx && apiEx.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                await Session.ClearAsync();
+                _error = "Your session expired. Please log in again.";
+            }
+            else
+            {
+                _error = ex.Message;
+            }
         }
         finally
         {

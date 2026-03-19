@@ -1,6 +1,9 @@
 ﻿@page "/leaderboard"
+@using System.Net
 @using Webgame.Contracts.Leaderboards
+@using Webgame.Blazor.Api
 @inject Webgame.Blazor.Api.ApiClient Api
+@inject Webgame.Blazor.State.PlayerSession Session
 
 <h3>Leaderboard</h3>
 
@@ -116,9 +119,18 @@ else
             var me = await Api.GetMeAsync();
             _myId = me.Id;
         }
-        catch
+        catch (Exception ex)
         {
-            _myId = null;
+            if (ex is ApiException apiEx && apiEx.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                await Session.ClearAsync();
+                _myId = null;
+                _error = "Your session expired. Please log in again.";
+            }
+            else
+            {
+                SetError(ex);
+            }
         }
 
         await Load();
@@ -144,7 +156,19 @@ else
         }
         catch (Exception ex)
         {
-            SetError(ex);
+            if (ex is ApiException apiEx && apiEx.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                await Session.ClearAsync();
+                _myId = null;
+                _myRank = null;
+                _entries = [];
+                _error = "Your session expired. Please log in again.";
+                _traceId = apiEx.Trace;
+            }
+            else
+            {
+                SetError(ex);
+            }
         }
         finally
         {

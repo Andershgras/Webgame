@@ -1,5 +1,6 @@
 ﻿@page "/"
 @implements IAsyncDisposable
+@using System.Net
 @using Webgame.Blazor.Api
 @using Webgame.Blazor.State
 @using Webgame.Contracts.Players
@@ -24,11 +25,11 @@
     </div>
 
     <div style="margin-bottom:12px;">
-        <button @onclick="Register" disabled="@_isCreating">
+        <button @onclick="Register" disabled="@(_isCreating || _isLoggingIn)">
             @(_isCreating ? "Creating..." : "Register")
         </button>
 
-        <button @onclick="Login" disabled="@_isLoggingIn" style="margin-left:8px;">
+        <button @onclick="Login" disabled="@(_isCreating || _isLoggingIn)" style="margin-left:8px;">
             @(_isLoggingIn ? "Logging in..." : "Login")
         </button>
     </div>
@@ -116,49 +117,23 @@ else
         try
         {
             _player = await Api.GetMeAsync();
-
-            if (_player.OfflineCoinsEarned > 0)
-            {
-                _offlineCoinsEarned = _player.OfflineCoinsEarned;
-                _offlineSecondsApplied = _player.OfflineSecondsApplied;
-                _showOfflineReward = true;
-
-                _ = HideOfflineRewardAfterDelay();
-            }
-
+            await HandleOfflineRewardAsync();
             await LoadUpgrades();
             EnsureAutoTickRunning();
             StateHasChanged();
         }
-        catch
+        catch (Exception ex)
         {
-            await Session.ClearAsync();
-            _tokenStatus = "(none)";
+            await HandleAuthAwareError(ex, resetPlayer: true);
         }
-    }
-
-    private async Task HideOfflineRewardAfterDelay()
-    {
-        await Task.Delay(5000);
-        _showOfflineReward = false;
-        await InvokeAsync(StateHasChanged);
     }
 
     private async Task Register()
     {
         ClearError();
 
-        if (string.IsNullOrWhiteSpace(_playerName))
-        {
-            _error = "Name is required.";
+        if (!ValidateCredentials())
             return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_password))
-        {
-            _error = "Password is required.";
-            return;
-        }
 
         _isCreating = true;
 
@@ -172,22 +147,14 @@ else
             _tokenStatus = "(present)";
             _player = await Api.GetMeAsync();
 
-            if (_player.OfflineCoinsEarned > 0)
-            {
-                _offlineCoinsEarned = _player.OfflineCoinsEarned;
-                _offlineSecondsApplied = _player.OfflineSecondsApplied;
-                _showOfflineReward = true;
-
-                _ = HideOfflineRewardAfterDelay();
-            }
-
+            await HandleOfflineRewardAsync();
             await LoadUpgrades();
             EnsureAutoTickRunning();
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            SetError(ex);
+            await HandleAuthAwareError(ex, resetPlayer: false);
         }
         finally
         {
@@ -199,17 +166,8 @@ else
     {
         ClearError();
 
-        if (string.IsNullOrWhiteSpace(_playerName))
-        {
-            _error = "Name is required.";
+        if (!ValidateCredentials())
             return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_password))
-        {
-            _error = "Password is required.";
-            return;
-        }
 
         _isLoggingIn = true;
 
@@ -221,22 +179,14 @@ else
             _tokenStatus = "(present)";
             _player = await Api.GetMeAsync();
 
-            if (_player.OfflineCoinsEarned > 0)
-            {
-                _offlineCoinsEarned = _player.OfflineCoinsEarned;
-                _offlineSecondsApplied = _player.OfflineSecondsApplied;
-                _showOfflineReward = true;
-
-                _ = HideOfflineRewardAfterDelay();
-            }
-
+            await HandleOfflineRewardAsync();
             await LoadUpgrades();
             EnsureAutoTickRunning();
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            SetError(ex);
+            await HandleAuthAwareError(ex, resetPlayer: false);
         }
         finally
         {
@@ -275,7 +225,7 @@ else
         }
         catch (Exception ex)
         {
-            SetError(ex);
+            await HandleAuthAwareError(ex, resetPlayer: true);
         }
         finally
         {
@@ -298,7 +248,7 @@ else
         }
         catch (Exception ex)
         {
-            SetError(ex);
+            await HandleAuthAwareError(ex, resetPlayer: true);
         }
         finally
         {
@@ -322,7 +272,7 @@ else
         }
         catch (Exception ex)
         {
-            SetError(ex);
+            await HandleAuthAwareError(ex, resetPlayer: true);
         }
         finally
         {
@@ -336,6 +286,84 @@ else
             return;
 
         _upgrades = await Api.GetUpgradesAsync(_player.Id);
+    }
+
+    private async Task HandleOfflineRewardAsync()
+    {
+        if (_player is null)
+            return;
+
+        if (_player.OfflineCoinsEarned > 0)
+        {
+            _offlineCoinsEarned = _player.OfflineCoinsEarned;
+            _offlineSecondsApplied = _player.OfflineSecondsApplied;
+            _showOfflineReward = true;
+
+            _ = HideOfflineRewardAfterDelay();
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task HideOfflineRewardAfterDelay()
+    {
+        await Task.Delay(5000);
+        _showOfflineReward = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private bool ValidateCredentials()
+    {
+        var name = _playerName.Trim();
+        var password = _password ?? "";
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            _error = "Name is required.";
+            return false;
+        }
+
+        if (name.Length < 3 || name.Length > 20)
+        {
+            _error = "Name must be between 3 and 20 characters.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            _error = "Password is required.";
+            return false;
+        }
+
+        if (password.Length < 6)
+        {
+            _error = "Password must be at least 6 characters.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task HandleAuthAwareError(Exception ex, bool resetPlayer)
+    {
+        if (ex is ApiException apiEx && apiEx.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            await Session.ClearAsync();
+            StopAutoTick();
+
+            if (resetPlayer)
+            {
+                _player = null;
+                _upgrades = [];
+            }
+
+            _tokenStatus = "(none)";
+            _error = "Your session expired. Please log in again.";
+            _traceId = apiEx.Trace;
+            return;
+        }
+
+        SetError(ex);
     }
 
     private void EnsureAutoTickRunning()
