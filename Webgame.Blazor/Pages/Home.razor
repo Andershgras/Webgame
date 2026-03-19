@@ -9,16 +9,27 @@
 @inject PlayerSession Session
 
 <h3>Webgame</h3>
-<p>Stored playerId: @_storedIdText</p>
+<p>Auth token stored: @_tokenStatus</p>
 
 @if (_player is null)
 {
-    <h4>Create Player</h4>
+    <h4>Login / Register</h4>
 
     <div style="margin-bottom:12px;">
         <input @bind="_playerName" placeholder="Enter player name" />
-        <button @onclick="Create" disabled="@_isCreating" style="margin-left:8px;">
-            @(_isCreating ? "Creating..." : "Create Player")
+    </div>
+
+    <div style="margin-bottom:12px;">
+        <input @bind="_password" type="password" placeholder="Enter password" />
+    </div>
+
+    <div style="margin-bottom:12px;">
+        <button @onclick="Register" disabled="@_isCreating">
+            @(_isCreating ? "Creating..." : "Register")
+        </button>
+
+        <button @onclick="Login" disabled="@_isLoggingIn" style="margin-left:8px;">
+            @(_isLoggingIn ? "Logging in..." : "Login")
         </button>
     </div>
 }
@@ -32,6 +43,7 @@ else
     <p><b>Level:</b> @_player.Level</p>
 
     <button @onclick="Click" disabled="@_isBusy">Click</button>
+    <button @onclick="Logout" style="margin-left:8px;">Logout</button>
 
     <h4>Upgrades</h4>
     @foreach (var u in _upgrades)
@@ -42,6 +54,7 @@ else
         </div>
     }
 }
+
 @if (_showOfflineReward)
 {
     <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
@@ -50,6 +63,7 @@ else
         over @(_offlineSecondsApplied / 60) minute(s)
     </div>
 }
+
 @if (!string.IsNullOrWhiteSpace(_error))
 {
     <div style="border:1px solid #f00; padding:12px; margin-bottom:12px;">
@@ -65,11 +79,15 @@ else
 @code {
     private PlayerResponse? _player;
     private IReadOnlyList<UpgradeCatalogEntry> _upgrades = [];
-    private string _storedIdText = "(not loaded)";
+
+    private string _tokenStatus = "(not loaded)";
     private bool _loadedFromStorage;
 
     private string _playerName = "";
+    private string _password = "";
+
     private bool _isCreating;
+    private bool _isLoggingIn;
     private bool _isBusy;
     private bool _isTicking;
 
@@ -89,23 +107,25 @@ else
 
         _loadedFromStorage = true;
 
-        var storedId = await Session.GetPlayerIdAsync();
-        _storedIdText = storedId?.ToString() ?? "(null)";
+        var token = await Session.GetTokenAsync();
+        _tokenStatus = string.IsNullOrWhiteSpace(token) ? "(none)" : "(present)";
 
-        if (storedId is null)
+        if (string.IsNullOrWhiteSpace(token))
             return;
 
         try
         {
-            _player = await Api.GetPlayerAsync(storedId.Value);
+            _player = await Api.GetMeAsync();
+
             if (_player.OfflineCoinsEarned > 0)
             {
                 _offlineCoinsEarned = _player.OfflineCoinsEarned;
                 _offlineSecondsApplied = _player.OfflineSecondsApplied;
                 _showOfflineReward = true;
 
-           _    = HideOfflineRewardAfterDelay();
+                _ = HideOfflineRewardAfterDelay();
             }
+
             await LoadUpgrades();
             EnsureAutoTickRunning();
             StateHasChanged();
@@ -113,17 +133,18 @@ else
         catch
         {
             await Session.ClearAsync();
-            _storedIdText = "(null)";
+            _tokenStatus = "(none)";
         }
     }
+
     private async Task HideOfflineRewardAfterDelay()
     {
         await Task.Delay(5000);
-
         _showOfflineReward = false;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
-    private async Task Create()
+
+    private async Task Register()
     {
         ClearError();
 
@@ -133,13 +154,33 @@ else
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "Password is required.";
+            return;
+        }
+
         _isCreating = true;
 
         try
         {
-            _player = await Api.CreatePlayerAsync(_playerName.Trim());
-            await Session.SetPlayerIdAsync(_player.Id);
-            _storedIdText = _player.Id.ToString();
+            await Api.RegisterAsync(_playerName.Trim(), _password);
+
+            var login = await Api.LoginAsync(_playerName.Trim(), _password);
+            await Session.SetTokenAsync(login.Token);
+
+            _tokenStatus = "(present)";
+            _player = await Api.GetMeAsync();
+
+            if (_player.OfflineCoinsEarned > 0)
+            {
+                _offlineCoinsEarned = _player.OfflineCoinsEarned;
+                _offlineSecondsApplied = _player.OfflineSecondsApplied;
+                _showOfflineReward = true;
+
+                _ = HideOfflineRewardAfterDelay();
+            }
+
             await LoadUpgrades();
             EnsureAutoTickRunning();
             StateHasChanged();
@@ -154,6 +195,71 @@ else
         }
     }
 
+    private async Task Login()
+    {
+        ClearError();
+
+        if (string.IsNullOrWhiteSpace(_playerName))
+        {
+            _error = "Name is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "Password is required.";
+            return;
+        }
+
+        _isLoggingIn = true;
+
+        try
+        {
+            var login = await Api.LoginAsync(_playerName.Trim(), _password);
+            await Session.SetTokenAsync(login.Token);
+
+            _tokenStatus = "(present)";
+            _player = await Api.GetMeAsync();
+
+            if (_player.OfflineCoinsEarned > 0)
+            {
+                _offlineCoinsEarned = _player.OfflineCoinsEarned;
+                _offlineSecondsApplied = _player.OfflineSecondsApplied;
+                _showOfflineReward = true;
+
+                _ = HideOfflineRewardAfterDelay();
+            }
+
+            await LoadUpgrades();
+            EnsureAutoTickRunning();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            SetError(ex);
+        }
+        finally
+        {
+            _isLoggingIn = false;
+        }
+    }
+
+    private async Task Logout()
+    {
+        StopAutoTick();
+        await Session.ClearAsync();
+
+        _player = null;
+        _upgrades = [];
+        _tokenStatus = "(none)";
+        _playerName = "";
+        _password = "";
+        _showOfflineReward = false;
+
+        ClearError();
+        StateHasChanged();
+    }
+
     private async Task Click()
     {
         if (_player is null || _isBusy)
@@ -164,7 +270,7 @@ else
 
         try
         {
-            _player = await Api.ClickAsync(_player.Id);
+            _player = await Api.ClickAsync();
             await LoadUpgrades();
         }
         catch (Exception ex)
@@ -187,7 +293,7 @@ else
 
         try
         {
-            _player = await Api.TickAsync(_player.Id);
+            _player = await Api.TickAsync();
             await LoadUpgrades();
         }
         catch (Exception ex)

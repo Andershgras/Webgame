@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Webgame.Blazor;
 using Webgame.Blazor.Api;
 using Webgame.Blazor.State;
 
@@ -16,13 +17,22 @@ namespace Webgame.Blazor
             var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
                 ?? throw new InvalidOperationException("Missing configuration value: ApiBaseUrl");
 
-            builder.Services.AddScoped(sp => new HttpClient
+            builder.Services.AddScoped<PlayerSession>();
+            builder.Services.AddScoped<AuthMessageHandler>();
+
+            builder.Services.AddScoped(sp =>
             {
-                BaseAddress = new Uri(apiBaseUrl)
+                var handler = sp.GetRequiredService<AuthMessageHandler>();
+                handler.InnerHandler = new HttpClientHandler();
+
+                return new HttpClient(handler)
+                {
+                    BaseAddress = new Uri(apiBaseUrl)
+                };
             });
 
             builder.Services.AddScoped<ApiClient>();
-            builder.Services.AddScoped<PlayerSession>();
+
             await builder.Build().RunAsync();
         }
     }

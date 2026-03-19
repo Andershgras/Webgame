@@ -1,7 +1,6 @@
 ﻿@page "/leaderboard"
 @using Webgame.Contracts.Leaderboards
 @inject Webgame.Blazor.Api.ApiClient Api
-@inject Webgame.Blazor.State.PlayerSession Session
 
 <h3>Leaderboard</h3>
 
@@ -110,13 +109,19 @@ else
         new(LeaderboardType.Level, "Highest Level")
     ];
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender) return;
+        try
+        {
+            var me = await Api.GetMeAsync();
+            _myId = me.Id;
+        }
+        catch
+        {
+            _myId = null;
+        }
 
-        _myId = await Session.GetPlayerIdAsync();
         await Load();
-        StateHasChanged();
     }
 
     private async Task Load()

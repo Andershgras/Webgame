@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using Webgame.Contracts.Leaderboards;
 using Webgame.Contracts.Players;
 using Webgame.Contracts.Upgrades;
@@ -15,39 +14,58 @@ public sealed class ApiClient
         _http = http;
     }
 
-    public async Task<PlayerResponse> CreatePlayerAsync(string name)
+    public async Task<LoginResponse> LoginAsync(string name, string password)
     {
-        var res = await _http.PostAsJsonAsync("api/players", new { name });
+        var res = await _http.PostAsJsonAsync("api/players/login", new { name, password });
+        return await ReadOrThrowAsync<LoginResponse>(res);
+    }
+
+    public async Task<PlayerResponse> RegisterAsync(string name, string password)
+    {
+        var res = await _http.PostAsJsonAsync("api/players", new { name, password });
         return await ReadOrThrowAsync<PlayerResponse>(res);
     }
 
-    public async Task<PlayerResponse> GetPlayerAsync(Guid id)
+    public async Task<PlayerResponse> GetMeAsync()
     {
-        var res = await _http.GetAsync($"api/players/{id}");
+        var res = await _http.GetAsync("api/players/me");
         return await ReadOrThrowAsync<PlayerResponse>(res);
     }
 
-    public async Task<PlayerResponse> ClickAsync(Guid id)
+    // Backward-compatible wrapper for old pages still calling GetPlayerAsync(id)
+    public Task<PlayerResponse> GetPlayerAsync(Guid id)
     {
-        var res = await _http.PostAsync($"api/players/{id}/click", null);
+        return GetMeAsync();
+    }
+
+    public async Task<PlayerResponse> ClickAsync()
+    {
+        var res = await _http.PostAsync("api/players/me/click", null);
         return await ReadOrThrowAsync<PlayerResponse>(res);
     }
 
-    public async Task<PlayerResponse> TickAsync(Guid id)
+    public async Task<PlayerResponse> TickAsync()
     {
-        var res = await _http.PostAsync($"api/players/{id}/tick", null);
+        var res = await _http.PostAsync("api/players/me/tick", null);
         return await ReadOrThrowAsync<PlayerResponse>(res);
     }
 
-    public async Task<IReadOnlyList<UpgradeCatalogEntry>> GetUpgradesAsync(Guid id)
+    public async Task DeleteAsync()
     {
-        var res = await _http.GetAsync($"api/players/{id}/upgrades");
+        var res = await _http.DeleteAsync("api/players/me");
+        if (!res.IsSuccessStatusCode)
+            await ReadOrThrowAsync<object>(res);
+    }
+
+    public async Task<IReadOnlyList<UpgradeCatalogEntry>> GetUpgradesAsync(Guid playerId)
+    {
+        var res = await _http.GetAsync($"api/players/{playerId}/upgrades");
         return await ReadOrThrowAsync<IReadOnlyList<UpgradeCatalogEntry>>(res);
     }
 
-    public async Task<UpgradePurchaseResponse> BuyUpgradeAsync(Guid id, string key)
+    public async Task<UpgradePurchaseResponse> BuyUpgradeAsync(Guid playerId, string key)
     {
-        var res = await _http.PostAsync($"api/players/{id}/upgrades/{key}/buy", null);
+        var res = await _http.PostAsync($"api/players/{playerId}/upgrades/{key}/buy", null);
         return await ReadOrThrowAsync<UpgradePurchaseResponse>(res);
     }
 
@@ -79,7 +97,6 @@ public sealed class ApiClient
         }
         catch
         {
-            // ignore parse issues
         }
 
         throw new ApiException(res.StatusCode, problem);
