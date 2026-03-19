@@ -28,7 +28,7 @@ public sealed class PlayersController : ControllerBase
     public sealed record LoginRequest(string Name, string Password);
 
     // -------------------------
-    // PUBLIC (NO AUTH REQUIRED)
+    // PUBLIC
     // -------------------------
 
     [AllowAnonymous]
@@ -41,7 +41,7 @@ public sealed class PlayersController : ControllerBase
             this,
             result,
             PlayerMappings.ToResponse,
-            dto => CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto));
+            dto => CreatedAtAction(nameof(GetMe), null, dto));
     }
 
     [AllowAnonymous]
@@ -67,16 +67,17 @@ public sealed class PlayersController : ControllerBase
     }
 
     // -------------------------
-    // PROTECTED (AUTH REQUIRED)
+    // PROTECTED (/me)
     // -------------------------
 
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<PlayerResponse>> GetById([FromRoute] Guid id, CancellationToken ct)
+    [HttpGet("me")]
+    public async Task<ActionResult<PlayerResponse>> GetMe(CancellationToken ct)
     {
-        if (!IsAuthorizedForPlayer(id))
-            return Forbid();
+        var playerId = GetPlayerIdFromToken();
+        if (playerId is null)
+            return Unauthorized();
 
-        var result = await _service.GetPlayerAsync(new PlayerId(id), ct);
+        var result = await _service.GetPlayerAsync(playerId.Value, ct);
 
         return ResultToHttp.ToActionResult<Player, PlayerResponse>(
             this,
@@ -85,13 +86,14 @@ public sealed class PlayersController : ControllerBase
             dto => Ok(dto));
     }
 
-    [HttpPost("{id:guid}/click")]
-    public async Task<ActionResult<PlayerResponse>> Click([FromRoute] Guid id, CancellationToken ct)
+    [HttpPost("me/click")]
+    public async Task<ActionResult<PlayerResponse>> Click(CancellationToken ct)
     {
-        if (!IsAuthorizedForPlayer(id))
-            return Forbid();
+        var playerId = GetPlayerIdFromToken();
+        if (playerId is null)
+            return Unauthorized();
 
-        var result = await _service.ClickAsync(new PlayerId(id), ct);
+        var result = await _service.ClickAsync(playerId.Value, ct);
 
         return ResultToHttp.ToActionResult<Player, PlayerResponse>(
             this,
@@ -100,42 +102,47 @@ public sealed class PlayersController : ControllerBase
             dto => Ok(dto));
     }
 
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete([FromRoute] Guid id, CancellationToken ct)
+    [HttpPost("me/tick")]
+    public async Task<ActionResult<PlayerResponse>> Tick(CancellationToken ct)
     {
-        if (!IsAuthorizedForPlayer(id))
-            return Forbid();
+        var playerId = GetPlayerIdFromToken();
+        if (playerId is null)
+            return Unauthorized();
 
-        var result = await _service.DeletePlayerAsync(new PlayerId(id), ct);
+        var result = await _service.TickAsync(playerId.Value, ct);
+
+        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
+            this,
+            result,
+            PlayerMappings.ToResponse,
+            dto => Ok(dto));
+    }
+
+    [HttpDelete("me")]
+    public async Task<IActionResult> Delete(CancellationToken ct)
+    {
+        var playerId = GetPlayerIdFromToken();
+        if (playerId is null)
+            return Unauthorized();
+
+        var result = await _service.DeletePlayerAsync(playerId.Value, ct);
 
         return ResultToHttp.ToActionResult(this, result, () => NoContent());
     }
 
-    [HttpPost("{id:guid}/tick")]
-    public async Task<ActionResult<PlayerResponse>> Tick([FromRoute] Guid id, CancellationToken ct)
-    {
-        if (!IsAuthorizedForPlayer(id))
-            return Forbid();
-
-        var result = await _service.TickAsync(new PlayerId(id), ct);
-
-        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
-            this,
-            result,
-            PlayerMappings.ToResponse,
-            dto => Ok(dto));
-    }
-
     // -------------------------
-    // HELPERS
+    // HELPER
     // -------------------------
 
-    private bool IsAuthorizedForPlayer(Guid routePlayerId)
+    private PlayerId? GetPlayerIdFromToken()
     {
         var claimValue =
             User.FindFirstValue(ClaimTypes.NameIdentifier) ??
             User.FindFirstValue("sub");
 
-        return Guid.TryParse(claimValue, out var tokenPlayerId) && tokenPlayerId == routePlayerId;
+        if (!Guid.TryParse(claimValue, out var id))
+            return null;
+
+        return new PlayerId(id);
     }
 }
