@@ -8,6 +8,7 @@
 
 @inject ApiClient Api
 @inject PlayerSession Session
+@inject PlayerUiState PlayerUiState
 
 <h3>Webgame</h3>
 <p>Auth token stored: @_tokenStatus</p>
@@ -36,12 +37,9 @@
 }
 else
 {
-    <p><b>Name:</b> @_player.Name</p>
-    <p><b>Coins:</b> @_player.Coins</p>
     <p><b>Click Power:</b> @_player.ClickPower</p>
     <p><b>Clicks Per Second:</b> @_player.ClicksPerSecond</p>
     <p><b>Offline Cap:</b> @(_player.OfflineCapSeconds / 60) min</p>
-    <p><b>Level:</b> @_player.Level</p>
 
     <button @onclick="Click" disabled="@_isBusy">Click</button>
     <button @onclick="Logout" style="margin-left:8px;">Logout</button>
@@ -117,6 +115,7 @@ else
         try
         {
             _player = await Api.GetMeAsync();
+            SyncPlayerUiState();
             await HandleOfflineRewardAsync();
             await LoadUpgrades();
             EnsureAutoTickRunning();
@@ -146,6 +145,7 @@ else
 
             _tokenStatus = "(present)";
             _player = await Api.GetMeAsync();
+            SyncPlayerUiState();
 
             await HandleOfflineRewardAsync();
             await LoadUpgrades();
@@ -178,6 +178,7 @@ else
 
             _tokenStatus = "(present)";
             _player = await Api.GetMeAsync();
+            SyncPlayerUiState();
 
             await HandleOfflineRewardAsync();
             await LoadUpgrades();
@@ -200,6 +201,7 @@ else
         await Session.ClearAsync();
 
         _player = null;
+        PlayerUiState.Clear();
         _upgrades = [];
         _tokenStatus = "(none)";
         _playerName = "";
@@ -221,6 +223,7 @@ else
         try
         {
             _player = await Api.ClickAsync();
+            SyncPlayerUiState();
             await LoadUpgrades();
         }
         catch (Exception ex)
@@ -244,6 +247,7 @@ else
         try
         {
             _player = await Api.TickAsync();
+            SyncPlayerUiState();
             await LoadUpgrades();
         }
         catch (Exception ex)
@@ -268,6 +272,7 @@ else
         {
             var res = await Api.BuyUpgradeAsync(key);
             _player = res.Player;
+            SyncPlayerUiState();
             await LoadUpgrades();
         }
         catch (Exception ex)
@@ -354,6 +359,7 @@ else
             if (resetPlayer)
             {
                 _player = null;
+                PlayerUiState.Clear();
                 _upgrades = [];
             }
 
@@ -435,5 +441,9 @@ else
     {
         StopAutoTick();
         return ValueTask.CompletedTask;
+    }
+    private void SyncPlayerUiState()
+    {
+    PlayerUiState.SetPlayer(_player);
     }
 }
