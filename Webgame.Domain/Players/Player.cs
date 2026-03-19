@@ -1,23 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Webgame.Domain.Common;
 
 namespace Webgame.Domain.Players;
+
 public sealed class Player : Entity<PlayerId>
 {
     private Player() : base() { } // EF Core
+
     public string Name { get; private set; }
+    public string PasswordHash { get; private set; }
     public Stats Stats { get; private set; }
-    //Offline progress
+
+    // Offline progress
     public DateTime LastActiveUtc { get; private set; } = DateTime.UtcNow;
     private long _pendingOfflineCoins;
     private int _pendingOfflineSeconds;
-    public Player(PlayerId id, string name) : base(id)
+
+    public Player(PlayerId id, string name, string passwordHash) : base(id)
     {
         Name = ValidateName(name);
+        PasswordHash = ValidatePasswordHash(passwordHash);
         Stats = new Stats();
     }
 
@@ -26,31 +28,49 @@ public sealed class Player : Entity<PlayerId>
         Name = ValidateName(newName);
     }
 
+    public void ChangePasswordHash(string newPasswordHash)
+    {
+        PasswordHash = ValidatePasswordHash(newPasswordHash);
+    }
+
     private static string ValidateName(string name)
     {
         name = (name ?? "").Trim();
+
         if (name.Length is < 3 or > 20)
             throw new ArgumentException("Name must be between 3 and 20 characters.", nameof(name));
 
         return name;
     }
+
+    private static string ValidatePasswordHash(string passwordHash)
+    {
+        passwordHash = (passwordHash ?? "").Trim();
+
+        if (string.IsNullOrWhiteSpace(passwordHash))
+            throw new ArgumentException("Password hash is required.", nameof(passwordHash));
+
+        return passwordHash;
+    }
+
     public void Click()
     {
         Stats.RegisterClick();
-
-        var coinsGained = Stats.ClickPower;
         Stats.AddCoins(Stats.ClickPower);
     }
-    public static bool TryCreate(string name, out Player? player)
+
+    public static bool TryCreate(string name, string passwordHash, out Player? player)
     {
         name = (name ?? "").Trim();
-        if (name.Length is < 3 or > 20)
+        passwordHash = (passwordHash ?? "").Trim();
+
+        if (name.Length is < 3 or > 20 || string.IsNullOrWhiteSpace(passwordHash))
         {
             player = null;
             return false;
         }
 
-        player = new Player(PlayerId.New(), name);
+        player = new Player(PlayerId.New(), name, passwordHash);
         return true;
     }
 
@@ -65,7 +85,6 @@ public sealed class Player : Entity<PlayerId>
 
     public long GetClickPowerUpgradeCost()
     {
-        // Eksempel: 10, 20, 30, 40...
         return 10L * Stats.ClickPowerLevel;
     }
 
@@ -82,7 +101,6 @@ public sealed class Player : Entity<PlayerId>
 
     public long GetAutoClickerUpgradeCost()
     {
-        // 100, 200, 300...
         return 100L * (Stats.AutoClickerLevel + 1);
     }
 
@@ -101,6 +119,7 @@ public sealed class Player : Entity<PlayerId>
         if (coins > 0)
             Stats.AddCoins(coins);
     }
+
     public void CalculateOfflineProgress(DateTime nowUtc)
     {
         if (nowUtc <= LastActiveUtc)
@@ -124,6 +143,7 @@ public sealed class Player : Entity<PlayerId>
 
         LastActiveUtc = nowUtc;
     }
+
     public (long CoinsEarned, int SecondsApplied) ConsumeOfflineProgress()
     {
         var result = (_pendingOfflineCoins, _pendingOfflineSeconds);
@@ -138,6 +158,7 @@ public sealed class Player : Entity<PlayerId>
     {
         LastActiveUtc = DateTime.UtcNow;
     }
+
     public long GetOfflineCapUpgradeCost()
     {
         return 500L * (Stats.OfflineCapLevel + 1);

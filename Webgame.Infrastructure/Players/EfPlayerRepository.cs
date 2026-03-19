@@ -41,4 +41,11 @@ public sealed class EfPlayerRepository : IPlayerRepository
     {
         _db.Players.Remove(player);
     }
+    public async Task<Player?> GetByNameAsync(string name, CancellationToken ct)
+    {
+        name = (name ?? "").Trim();
+
+        return await _db.Players
+            .FirstOrDefaultAsync(p => p.Name == name, ct);
+    }
 }

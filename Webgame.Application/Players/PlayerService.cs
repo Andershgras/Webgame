@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Webgame.Application.Common;
 using Webgame.Application.Persistence;
@@ -21,16 +19,42 @@ public sealed class PlayerService
         _uow = uow;
     }
 
-    public async Task<Result<Player>> CreatePlayerAsync(string name, CancellationToken ct)
+    public async Task<Result<Player>> CreatePlayerAsync(string name, string password, CancellationToken ct)
     {
-        if (!Player.TryCreate(name, out var player) || player is null)
-            return Result<Player>.Fail(Errors.InvalidName);
+        password = (password ?? "").Trim();
 
-        var exists = await _repo.ExistsByNameAsync(player.Name, ct);
+        if (password.Length < 6)
+            return Result<Player>.Fail(Errors.InvalidPassword);
+
+        var exists = await _repo.ExistsByNameAsync(name, ct);
         if (exists)
             return Result<Player>.Fail(Errors.PlayerNameAlreadyExists);
 
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+
+        if (!Player.TryCreate(name, passwordHash, out var player) || player is null)
+            return Result<Player>.Fail(Errors.InvalidName);
+
         await _repo.AddAsync(player, ct);
+        await _uow.SaveChangesAsync(ct);
+
+        return Result<Player>.Ok(player);
+    }
+
+    public async Task<Result<Player>> LoginAsync(string name, string password, CancellationToken ct)
+    {
+        password = (password ?? "").Trim();
+
+        var player = await _repo.GetByNameAsync(name, ct);
+        if (player is null)
+            return Result<Player>.Fail(Errors.InvalidCredentials);
+
+        var isValidPassword = BCrypt.Net.BCrypt.Verify(password, player.PasswordHash);
+        if (!isValidPassword)
+            return Result<Player>.Fail(Errors.InvalidCredentials);
+
+        player.Touch();
+        _repo.Update(player);
         await _uow.SaveChangesAsync(ct);
 
         return Result<Player>.Ok(player);
@@ -74,6 +98,7 @@ public sealed class PlayerService
 
         return Result.Ok();
     }
+
     public async Task<Result<UpgradePurchaseResult>> BuyUpgradeAsync(PlayerId id, string key, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
@@ -90,12 +115,12 @@ public sealed class PlayerService
             case "click_power":
                 success = player.TryUpgradeClickPower(out cost);
                 newLevel = player.Stats.ClickPowerLevel;
-            break;
+                break;
 
             case "auto_clicker":
                 success = player.TryUpgradeAutoClicker(out cost);
                 newLevel = player.Stats.AutoClickerLevel;
-            break;
+                break;
 
             case "offline_cap":
                 success = player.TryUpgradeOfflineCap(out cost);
@@ -104,19 +129,19 @@ public sealed class PlayerService
 
             default:
                 return Result<UpgradePurchaseResult>.Fail(Errors.InvalidUpgradeKey);
+        }
+
+        if (success is false)
+            return Result<UpgradePurchaseResult>.Fail(Errors.NotEnoughCoins);
+
+        _repo.Update(player);
+        player.Touch();
+        await _uow.SaveChangesAsync(ct);
+
+        return Result<UpgradePurchaseResult>.Ok(new UpgradePurchaseResult(key, cost, newLevel, player));
     }
 
-    if (success is false)
-        return Result<UpgradePurchaseResult>.Fail(Errors.NotEnoughCoins);
-
-    _repo.Update(player);
-    player.Touch();
-    await _uow.SaveChangesAsync(ct);
-
-    return Result<UpgradePurchaseResult>.Ok(new UpgradePurchaseResult(key, cost, newLevel, player));
-}
-
-public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
+    public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
         if (player is null) return Result<Player>.Fail(Errors.PlayerNotFound);
@@ -129,4 +154,3 @@ public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
         return Result<Player>.Ok(player);
     }
 }
-
