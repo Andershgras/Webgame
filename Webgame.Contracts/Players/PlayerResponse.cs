@@ -10,6 +10,8 @@ public sealed record PlayerResponse(
     Guid Id,
     string Name,
     int Level,
+    long Experience,
+    long ExperienceToNextLevel,
     long Coins,
     int ClickPower,
     int ClickPowerLevel,

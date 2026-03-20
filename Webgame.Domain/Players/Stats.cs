@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Webgame.Domain.Players;
 
@@ -13,6 +9,8 @@ public sealed class Stats
 
     // Leveling
     public int Level { get; private set; } = 1;
+    public long Experience { get; private set; } = 0;
+    public long ExperienceToNextLevel { get; private set; } = CalculateExperienceToNextLevel(1);
 
     // Currency
     public long Coins { get; private set; } = 0;
@@ -24,26 +22,42 @@ public sealed class Stats
 
     // Offline progress
     public int OfflineCapLevel { get; private set; } = 0;
-
     public int OfflineCapSeconds => 3600 + (OfflineCapLevel * 1800);
-
-    public void UpgradeOfflineCap()
-    {
-        OfflineCapLevel++;
-    }
 
     // Helpers
     public int AutoCoinsPerTick => AutoClickerLevel;
-    public void UpgradeAutoClicker() => AutoClickerLevel++;
+    public int ClicksPerSecond => AutoClickerLevel;
 
     // Lifetime
     public long TotalClicks { get; private set; }
     public long TotalCoinsEarned { get; private set; }
     public long TotalCoinsSpent { get; private set; }
 
+    public void UpgradeOfflineCap()
+    {
+        OfflineCapLevel++;
+    }
+
+    public void UpgradeAutoClicker()
+    {
+        AutoClickerLevel++;
+    }
+
+    public void UpgradeClickPower()
+    {
+        ClickPowerLevel++;
+        ClickPower++;
+    }
+
+    public void RegisterClick()
+    {
+        TotalClicks++;
+    }
+
     public void AddCoins(long amount)
     {
-        if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
+        if (amount < 0)
+            throw new ArgumentOutOfRangeException(nameof(amount));
 
         Coins += amount;
         TotalCoinsEarned += amount;
@@ -59,14 +73,26 @@ public sealed class Stats
         return true;
     }
 
-    public void UpgradeClickPower()
+    public void AddExperience(long amount)
     {
-        ClickPowerLevel++;
-        ClickPower++;
+        if (amount <= 0)
+            return;
+
+        Experience += amount;
+
+        while (Experience >= ExperienceToNextLevel)
+        {
+            Experience -= ExperienceToNextLevel;
+            Level++;
+            ExperienceToNextLevel = CalculateExperienceToNextLevel(Level);
+        }
     }
 
-    public void RegisterClick()
+    public static long CalculateExperienceToNextLevel(int level)
     {
-        TotalClicks++;
+        if (level < 1)
+            level = 1;
+
+        return (long)Math.Ceiling(100 * Math.Pow(level, 1.5));
     }
 }

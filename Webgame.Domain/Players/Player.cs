@@ -56,7 +56,12 @@ public sealed class Player : Entity<PlayerId>
     public void Click()
     {
         Stats.RegisterClick();
-        Stats.AddCoins(Stats.ClickPower);
+
+        var coinsGained = Stats.ClickPower;
+        Stats.AddCoins(coinsGained);
+
+        var xpGained = Math.Max(1, (long)Math.Ceiling(Stats.ClickPower * 1.5));
+        Stats.AddExperience(xpGained);
     }
 
     public static bool TryCreate(string name, string passwordHash, out Player? player)
@@ -96,6 +101,10 @@ public sealed class Player : Entity<PlayerId>
             return false;
 
         Stats.UpgradeClickPower();
+
+        var xpGained = Math.Max(1, cost / 10);
+        Stats.AddExperience(xpGained);
+
         return true;
     }
 
@@ -110,6 +119,10 @@ public sealed class Player : Entity<PlayerId>
         if (!Stats.TrySpendCoins(cost)) return false;
 
         Stats.UpgradeAutoClicker();
+
+        var xpGained = Math.Max(1, cost / 10);
+        Stats.AddExperience(xpGained);
+
         return true;
     }
 
@@ -118,6 +131,10 @@ public sealed class Player : Entity<PlayerId>
         var coins = Stats.AutoCoinsPerTick;
         if (coins > 0)
             Stats.AddCoins(coins);
+
+        var xpGained = Math.Max(0, (long)Math.Ceiling(Stats.AutoCoinsPerTick * 0.5));
+        if (xpGained > 0)
+            Stats.AddExperience(xpGained);
     }
 
     public void CalculateOfflineProgress(DateTime nowUtc)
@@ -136,6 +153,10 @@ public sealed class Player : Entity<PlayerId>
             var coins = (long)cappedSeconds * Stats.AutoCoinsPerTick;
 
             Stats.AddCoins(coins);
+
+            var xp = (long)Math.Ceiling(cappedSeconds * Stats.AutoCoinsPerTick * 0.5);
+            if (xp > 0)
+                Stats.AddExperience(xp);
 
             _pendingOfflineCoins = coins;
             _pendingOfflineSeconds = cappedSeconds;
@@ -172,6 +193,10 @@ public sealed class Player : Entity<PlayerId>
             return false;
 
         Stats.UpgradeOfflineCap();
+
+        var xpGained = Math.Max(1, cost / 10);
+        Stats.AddExperience(xpGained);
+
         return true;
     }
 }
