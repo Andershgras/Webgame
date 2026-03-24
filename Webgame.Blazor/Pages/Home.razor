@@ -274,7 +274,17 @@ else
         {
             var res = await Api.BuyUpgradeAsync(key);
             UpdatePlayer(res.Player);
+
             await LoadUpgrades();
+
+            var upgraded = _upgrades.FirstOrDefault(u => u.Key == key);
+            if (upgraded is not null)
+            {
+                MessageService.Add(
+                    $"{upgraded.Name} upgraded to level {upgraded.CurrentLevel}",
+                    "success"
+                );
+            }
         }
         catch (Exception ex)
         {
