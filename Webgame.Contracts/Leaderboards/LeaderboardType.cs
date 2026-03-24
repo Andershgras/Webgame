@@ -2,7 +2,7 @@
 
 public enum LeaderboardType
 {
-    Coins = 0,
-    ClickPower = 1,
-    Level = 2
+    TotalClicks = 0,
+    TotalCoinsEarned = 1,
+    TotalCoinsSpent = 2
 }

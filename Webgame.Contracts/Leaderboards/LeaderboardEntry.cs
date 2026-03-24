@@ -9,7 +9,5 @@ namespace Webgame.Contracts.Leaderboards;
 public sealed record LeaderboardEntry(
     Guid PlayerId,
     string Name,
-    int Level,
-    long Coins,
-    int ClickPower
+    long Value
 );

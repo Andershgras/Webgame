@@ -63,9 +63,7 @@ else
             <tr>
                 <th style="text-align:left; border-bottom:1px solid #ccc; padding:6px;">#</th>
                 <th style="text-align:left; border-bottom:1px solid #ccc; padding:6px;">Player</th>
-                <th style="text-align:right; border-bottom:1px solid #ccc; padding:6px;">Level</th>
-                <th style="text-align:right; border-bottom:1px solid #ccc; padding:6px;">Coins</th>
-                <th style="text-align:right; border-bottom:1px solid #ccc; padding:6px;">ClickPower</th>
+                <th style="text-align:right; border-bottom:1px solid #ccc; padding:6px;">@GetValueColumnHeader(_selectedType)</th>
             </tr>
         </thead>
         <tbody>
@@ -83,9 +81,7 @@ else
                             <span style="opacity:0.7; margin-left:6px;">(you)</span>
                         }
                     </td>
-                    <td style="padding:6px; text-align:right;">@e.Level</td>
-                    <td style="padding:6px; text-align:right;">@e.Coins</td>
-                    <td style="padding:6px; text-align:right;">@e.ClickPower</td>
+                    <td style="padding:6px; text-align:right;">@e.Value</td>
                 </tr>
             }
         </tbody>
@@ -103,13 +99,13 @@ else
     private string? _error;
     private string? _traceId;
 
-    private LeaderboardType _selectedType = LeaderboardType.Coins;
+    private LeaderboardType _selectedType = LeaderboardType.TotalClicks;
 
     private readonly List<LeaderboardOption> _options =
     [
-        new(LeaderboardType.Coins, "Most Coins"),
-        new(LeaderboardType.ClickPower, "Highest Click Power"),
-        new(LeaderboardType.Level, "Highest Level")
+        new(LeaderboardType.TotalClicks, "Most Total Clicks"),
+        new(LeaderboardType.TotalCoinsEarned, "Most Total Coins Earned"),
+        new(LeaderboardType.TotalCoinsSpent, "Most Total Coins Spent")
     ];
 
     protected override async Task OnInitializedAsync()
@@ -184,7 +180,7 @@ else
         }
         else
         {
-            _selectedType = LeaderboardType.Coins;
+            _selectedType = LeaderboardType.TotalClicks;
         }
 
         await Load();
@@ -192,10 +188,18 @@ else
 
     private static string GetLeaderboardLabel(LeaderboardType type) => type switch
     {
-        LeaderboardType.Coins => "Most Coins",
-        LeaderboardType.ClickPower => "Highest Click Power",
-        LeaderboardType.Level => "Highest Level",
+        LeaderboardType.TotalClicks => "Most Total Clicks",
+        LeaderboardType.TotalCoinsEarned => "Most Total Coins Earned",
+        LeaderboardType.TotalCoinsSpent => "Most Total Coins Spent",
         _ => type.ToString()
+    };
+
+    private static string GetValueColumnHeader(LeaderboardType type) => type switch
+    {
+        LeaderboardType.TotalClicks => "Total Clicks",
+        LeaderboardType.TotalCoinsEarned => "Total Coins Earned",
+        LeaderboardType.TotalCoinsSpent => "Total Coins Spent",
+        _ => "Value"
     };
 
     private void ClearError()

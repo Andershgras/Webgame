@@ -25,9 +25,9 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
             .Select(p => new LeaderboardRow(
                 p.Id.Value,
                 p.Name,
-                p.Stats.Level,
-                p.Stats.Coins,
-                p.Stats.ClickPower))
+                p.Stats.TotalClicks,
+                p.Stats.TotalCoinsEarned,
+                p.Stats.TotalCoinsSpent))
             .ToListAsync(ct);
 
         var list = SortPlayers(players, type)
@@ -35,9 +35,7 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
             .Select(p => new LeaderboardEntry(
                 p.PlayerId,
                 p.Name,
-                p.Level,
-                p.Coins,
-                p.ClickPower))
+                GetValueByType(p, type)))
             .ToList();
 
         return Result<IReadOnlyList<LeaderboardEntry>>.Ok(list);
@@ -50,9 +48,9 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
             .Select(p => new LeaderboardRow(
                 p.Id.Value,
                 p.Name,
-                p.Stats.Level,
-                p.Stats.Coins,
-                p.Stats.ClickPower))
+                p.Stats.TotalClicks,
+                p.Stats.TotalCoinsEarned,
+                p.Stats.TotalCoinsSpent))
             .ToListAsync(ct);
 
         var ordered = SortPlayers(players, type).ToList();
@@ -68,36 +66,47 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
     {
         return type switch
         {
-            LeaderboardType.Coins => players
-                .OrderByDescending(p => p.Coins)
-                .ThenByDescending(p => p.Level)
-                .ThenByDescending(p => p.ClickPower)
+            LeaderboardType.TotalClicks => players
+                .OrderByDescending(p => p.TotalClicks)
+                .ThenByDescending(p => p.TotalCoinsEarned)
+                .ThenByDescending(p => p.TotalCoinsSpent)
                 .ThenBy(p => p.PlayerId),
 
-            LeaderboardType.ClickPower => players
-                .OrderByDescending(p => p.ClickPower)
-                .ThenByDescending(p => p.Level)
-                .ThenByDescending(p => p.Coins)
+            LeaderboardType.TotalCoinsEarned => players
+                .OrderByDescending(p => p.TotalCoinsEarned)
+                .ThenByDescending(p => p.TotalClicks)
+                .ThenByDescending(p => p.TotalCoinsSpent)
                 .ThenBy(p => p.PlayerId),
 
-            LeaderboardType.Level => players
-                .OrderByDescending(p => p.Level)
-                .ThenByDescending(p => p.Coins)
-                .ThenByDescending(p => p.ClickPower)
+            LeaderboardType.TotalCoinsSpent => players
+                .OrderByDescending(p => p.TotalCoinsSpent)
+                .ThenByDescending(p => p.TotalCoinsEarned)
+                .ThenByDescending(p => p.TotalClicks)
                 .ThenBy(p => p.PlayerId),
 
             _ => players
-                .OrderByDescending(p => p.Coins)
-                .ThenByDescending(p => p.Level)
-                .ThenByDescending(p => p.ClickPower)
+                .OrderByDescending(p => p.TotalClicks)
+                .ThenByDescending(p => p.TotalCoinsEarned)
+                .ThenByDescending(p => p.TotalCoinsSpent)
                 .ThenBy(p => p.PlayerId)
+        };
+    }
+
+    private static long GetValueByType(LeaderboardRow row, LeaderboardType type)
+    {
+        return type switch
+        {
+            LeaderboardType.TotalClicks => row.TotalClicks,
+            LeaderboardType.TotalCoinsEarned => row.TotalCoinsEarned,
+            LeaderboardType.TotalCoinsSpent => row.TotalCoinsSpent,
+            _ => row.TotalClicks
         };
     }
 
     private sealed record LeaderboardRow(
         Guid PlayerId,
         string Name,
-        int Level,
-        long Coins,
-        int ClickPower);
+        long TotalClicks,
+        long TotalCoinsEarned,
+        long TotalCoinsSpent);
 }

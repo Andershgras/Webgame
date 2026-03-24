@@ -19,7 +19,7 @@ public sealed class LeaderboardController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<LeaderboardEntry>>> Get(
         [FromQuery] int top = 10,
-        [FromQuery] LeaderboardType type = LeaderboardType.Coins,
+        [FromQuery] LeaderboardType type = LeaderboardType.TotalClicks,
         CancellationToken ct = default)
     {
         var result = await _query.GetTopAsync(top, type, ct);
@@ -34,7 +34,7 @@ public sealed class LeaderboardController : ControllerBase
     [HttpGet("rank")]
     public async Task<ActionResult<int>> GetRank(
         [FromQuery] Guid playerId,
-        [FromQuery] LeaderboardType type = LeaderboardType.Coins,
+        [FromQuery] LeaderboardType type = LeaderboardType.TotalClicks,
         CancellationToken ct = default)
     {
         var result = await _query.GetRankAsync(playerId, type, ct);
