@@ -20,6 +20,7 @@ namespace Webgame.Blazor
             builder.Services.AddScoped<PlayerSession>();
             builder.Services.AddScoped<AuthMessageHandler>();
             builder.Services.AddScoped<PlayerUiState>();
+            builder.Services.AddScoped<MessageService>();
 
             builder.Services.AddScoped(sp =>
             {

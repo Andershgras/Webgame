@@ -9,6 +9,7 @@
 @inject ApiClient Api
 @inject PlayerSession Session
 @inject PlayerUiState PlayerUiState
+@inject MessageService MessageService
 
 @if (_player is null)
 {
@@ -84,16 +85,7 @@ else
         </div>
     </div>
 }
-
-@if (_showOfflineReward)
-{
-    <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
-        <b>Offline Progress:</b><br />
-        You earned @_offlineCoinsEarned coins<br />
-        over @(_offlineSecondsApplied / 60) minute(s)
-    </div>
-}
-
+<button @onclick="ShowTestMessage">Test Message</button>
 @if (!string.IsNullOrWhiteSpace(_error))
 {
     <div style="border:1px solid #f00; padding:12px; margin-bottom:12px;">
@@ -126,9 +118,6 @@ else
 
     private string? _error;
     private string? _traceId;
-    private bool _showOfflineReward;
-    private long _offlineCoinsEarned;
-    private int _offlineSecondsApplied;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -307,30 +296,25 @@ else
         _upgrades = await Api.GetUpgradesAsync();
     }
 
-    private async Task HandleOfflineRewardAsync()
+    private Task HandleOfflineRewardAsync()
     {
         if (_player is null)
-            return;
+            return Task.CompletedTask;
 
         if (_player.OfflineCoinsEarned > 0)
         {
-            _offlineCoinsEarned = _player.OfflineCoinsEarned;
-            _offlineSecondsApplied = _player.OfflineSecondsApplied;
-            _showOfflineReward = true;
+            var timeText = _player.OfflineSecondsApplied < 60
+                ? $"{_player.OfflineSecondsApplied} second(s)"
+                : $"{Math.Ceiling(_player.OfflineSecondsApplied / 60d)} minute(s)";
 
-            _ = HideOfflineRewardAfterDelay();
+            MessageService.Add(
+                $"You earned {_player.OfflineCoinsEarned} coins over {timeText}",
+                "success"
+            );
         }
 
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
-
-    private async Task HideOfflineRewardAfterDelay()
-    {
-        await Task.Delay(5000);
-        _showOfflineReward = false;
-        await InvokeAsync(StateHasChanged);
-    }
-
     private bool ValidateCredentials()
     {
         var name = _playerName.Trim();
@@ -459,5 +443,9 @@ else
     private void SyncPlayerUiState()
     {
     PlayerUiState.SetPlayer(_player);
+    }
+    private void ShowTestMessage()
+    {
+        MessageService.Add("TEST MESSAGE WORKS", "success");
     }
 }

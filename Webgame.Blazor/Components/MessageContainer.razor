@@ -1,0 +1,42 @@
+﻿@using Webgame.Blazor.State
+@inject MessageService MessageService
+@implements IDisposable
+
+<div style="position:fixed; top:20px; right:20px; z-index:9999;">
+    @foreach (var msg in MessageService.Messages)
+    {
+        <div style="@GetStyle(msg.Type)">
+            @msg.Text
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        MessageService.OnChange += HandleMessagesChanged;
+    }
+
+    private async void HandleMessagesChanged()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        MessageService.OnChange -= HandleMessagesChanged;
+    }
+
+    private string GetStyle(string type)
+    {
+        var bg = type switch
+        {
+            "success" => "#4caf50",
+            "error" => "#f44336",
+            "warning" => "#ff9800",
+            _ => "#333"
+        };
+
+        return $"background:{bg}; color:white; padding:10px 15px; margin-bottom:10px; border-radius:5px; min-width:200px; box-shadow:0 4px 12px rgba(0,0,0,0.2);";
+    }
+}
