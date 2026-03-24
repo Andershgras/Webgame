@@ -26,6 +26,7 @@ public sealed class PlayersController : ControllerBase
 
     public sealed record CreatePlayerRequest(string Name, string Password);
     public sealed record LoginRequest(string Name, string Password);
+    public sealed record MergeCoresRequest(Guid FirstCoreId, Guid SecondCoreId);
 
     // -------------------------
     // PUBLIC
@@ -33,7 +34,9 @@ public sealed class PlayersController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost]
-    public async Task<ActionResult<PlayerResponse>> Create([FromBody] CreatePlayerRequest request, CancellationToken ct)
+    public async Task<ActionResult<PlayerResponse>> Create(
+        [FromBody] CreatePlayerRequest request,
+        CancellationToken ct)
     {
         var result = await _service.CreatePlayerAsync(request.Name, request.Password, ct);
 
@@ -46,7 +49,9 @@ public sealed class PlayersController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request, CancellationToken ct)
+    public async Task<ActionResult<LoginResponse>> Login(
+        [FromBody] LoginRequest request,
+        CancellationToken ct)
     {
         var result = await _service.LoginAsync(request.Name, request.Password, ct);
 
@@ -110,6 +115,44 @@ public sealed class PlayersController : ControllerBase
             return Unauthorized();
 
         var result = await _service.TickAsync(playerId.Value, ct);
+
+        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
+            this,
+            result,
+            PlayerMappings.ToResponse,
+            dto => Ok(dto));
+    }
+
+    [HttpPost("me/cores/spawn")]
+    public async Task<ActionResult<PlayerResponse>> SpawnCore(CancellationToken ct)
+    {
+        var playerId = GetPlayerIdFromToken();
+        if (playerId is null)
+            return Unauthorized();
+
+        var result = await _service.SpawnCoreAsync(playerId.Value, ct);
+
+        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
+            this,
+            result,
+            PlayerMappings.ToResponse,
+            dto => Ok(dto));
+    }
+
+    [HttpPost("me/cores/merge")]
+    public async Task<ActionResult<PlayerResponse>> MergeCores(
+        [FromBody] MergeCoresRequest request,
+        CancellationToken ct)
+    {
+        var playerId = GetPlayerIdFromToken();
+        if (playerId is null)
+            return Unauthorized();
+
+        var result = await _service.MergeCoresAsync(
+            playerId.Value,
+            request.FirstCoreId,
+            request.SecondCoreId,
+            ct);
 
         return ResultToHttp.ToActionResult<Player, PlayerResponse>(
             this,

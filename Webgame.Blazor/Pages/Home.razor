@@ -42,23 +42,79 @@
 else
 {
     <div style="display:flex; justify-content:center; margin-top:30px;">
-        <div style="width:100%; max-width:900px; text-align:center;">
+        <div style="width:100%; max-width:1000px; text-align:center;">
 
             <h1 style="margin-bottom:10px;">Webgame</h1>
 
             <p style="margin:6px 0;">
-                <b>Coins:</b> @_player.Coins
+                <b>Energy:</b> @_player.Energy
+            </p>
+
+            <p style="margin:6px 0;">
+                <b>Stellar Energy:</b> @_player.StellarEnergy
+            </p>
+
+            <p style="margin:6px 0;">
+                <b>Storm Energy:</b> @_player.StormEnergy
             </p>
 
             <p style="margin:6px 0 24px 0;">
-                <b>CPS:</b> @_player.ClicksPerSecond
+                <b>Production / sec:</b> @GetTotalBoardProduction()
             </p>
 
-            <button @onclick="Click"
-                    disabled="@_isBusy"
-                    style="width:180px; height:180px; border-radius:50%; font-size:24px; margin-bottom:30px;">
-                Click
-            </button>
+            <p><b>Board slots:</b> @_player.BoardSlotCount</p>
+            <p><b>Core count:</b> @_player.Cores.Count</p>
+            <p><b>Board full:</b> @IsBoardFull()</p>
+            <p><b>Busy:</b> @_isBusy</p>
+            @{
+                var elapsed = (DateTime.UtcNow - _lastSpawnTime).TotalSeconds;
+                var seconds = Math.Min(SpawnIntervalSeconds, elapsed);
+            }
+
+            <div style="margin-bottom:20px;">
+                <b>Auto spawn:</b> @Math.Round(seconds, 1)s / @SpawnIntervalSeconds s
+            </div>
+            <div style="margin-bottom:20px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+                <button @onclick="SpawnCore"
+                        disabled="@_isBusy"
+                        style="padding:10px 18px;">
+                    Spawn Core
+                </button>
+
+                <button @onclick="MergeSelectedCores"
+                        disabled="@(_isBusy || _selectedCoreIds.Count != 2)"
+                        style="padding:10px 18px;">
+                    Merge Selected
+                </button>
+            </div>
+
+            <div style="margin:0 auto 30px auto; max-width:760px;">
+                <h3 style="margin-bottom:12px;">Core Board</h3>
+
+                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;">
+                    @for (var slot = 0; slot < _player.BoardSlotCount; slot++)
+                    {
+                        var core = GetCoreAtSlot(slot);
+                        var isSelected = core is not null && _selectedCoreIds.Contains(core.Id);
+
+                        <button @onclick="() => ToggleCoreSelection(core)"
+                                disabled="@(_isBusy || core is null)"
+                                style="@GetBoardSlotStyle(core is not null, isSelected)">
+                            @if (core is null)
+                            {
+                                <div style="opacity:0.45;">Empty</div>
+                            }
+                            else
+                            {
+                                <div><b>Tier @core.Tier</b></div>
+                                <div style="font-size:0.9em; margin-top:6px;">
+                                    +@core.ProductionPerSecond / sec
+                                </div>
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
 
             <div style="margin:0 auto; max-width:500px; text-align:left;">
                 <h3 style="text-align:center; margin-bottom:12px;">Upgrades</h3>
@@ -112,11 +168,18 @@ else
     private bool _isBusy;
     private bool _isTicking;
 
+    private readonly HashSet<Guid> _selectedCoreIds = [];
+
     private CancellationTokenSource? _autoTickCts;
     private Task? _autoTickTask;
 
     private string? _error;
     private string? _traceId;
+    // AUTO SPAWN
+	private DateTime _lastSpawnTime = DateTime.UtcNow;
+    private const double SpawnIntervalSeconds = 5;
+    private CancellationTokenSource? _spawnCts;
+    private Task? _spawnTask;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -214,30 +277,6 @@ else
         }
     }
 
-    private async Task Click()
-    {
-        if (_player is null || _isBusy)
-            return;
-
-        ClearError();
-        _isBusy = true;
-
-        try
-        {
-            var updatedPlayer = await Api.ClickAsync();
-            UpdatePlayer(updatedPlayer);
-            await LoadUpgrades();
-        }
-        catch (Exception ex)
-        {
-            await HandleAuthAwareError(ex, resetPlayer: true);
-        }
-        finally
-        {
-            _isBusy = false;
-        }
-    }
-
     private async Task Tick()
     {
         if (_player is null || _isTicking)
@@ -260,6 +299,99 @@ else
         {
             _isTicking = false;
         }
+    }
+
+    private async Task SpawnCore()
+    {
+        if (_player is null || _isBusy)
+            return;
+
+        ClearError();
+        _isBusy = true;
+
+        try
+        {
+            var updatedPlayer = await Api.SpawnCoreAsync();
+            UpdatePlayer(updatedPlayer);
+            await LoadUpgrades();
+        }
+        catch (Exception ex)
+        {
+            await HandleAuthAwareError(ex, resetPlayer: true);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task MergeSelectedCores()
+    {
+        if (_player is null || _isBusy || _selectedCoreIds.Count != 2)
+            return;
+
+        ClearError();
+        _isBusy = true;
+
+        try
+        {
+            var ids = _selectedCoreIds.ToList();
+            var updatedPlayer = await Api.MergeCoresAsync(ids[0], ids[1]);
+            _selectedCoreIds.Clear();
+            UpdatePlayer(updatedPlayer);
+            await LoadUpgrades();
+        }
+        catch (Exception ex)
+        {
+            await HandleAuthAwareError(ex, resetPlayer: true);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private void ToggleCoreSelection(CoreDto? core)
+    {
+        if (core is null)
+            return;
+
+        if (_selectedCoreIds.Contains(core.Id))
+        {
+            _selectedCoreIds.Remove(core.Id);
+            return;
+        }
+
+        if (_selectedCoreIds.Count >= 2)
+            return;
+
+        _selectedCoreIds.Add(core.Id);
+    }
+
+    private CoreDto? GetCoreAtSlot(int slotIndex)
+    {
+        return _player?.Cores.FirstOrDefault(c => c.SlotIndex == slotIndex);
+    }
+
+    private long GetTotalBoardProduction()
+    {
+        return _player?.Cores.Sum(c => c.ProductionPerSecond) ?? 0;
+    }
+
+    private bool IsBoardFull()
+    {
+        if (_player is null)
+            return true;
+
+        return _player.Cores.Count >= _player.BoardSlotCount;
+    }
+
+    private static string GetBoardSlotStyle(bool hasCore, bool isSelected)
+    {
+        var border = isSelected ? "2px solid #2f80ed" : "1px solid #bbb";
+        var background = hasCore ? "#f8f8f8" : "#fcfcfc";
+
+        return $"height:110px; border:{border}; background:{background}; border-radius:10px; cursor:pointer; padding:8px;";
     }
 
     private async Task Buy(string key)
@@ -309,20 +441,21 @@ else
         if (_player is null)
             return Task.CompletedTask;
 
-        if (_player.OfflineCoinsEarned > 0)
+        if (_player.OfflineEnergyEarned > 0)
         {
             var timeText = _player.OfflineSecondsApplied < 60
                 ? $"{_player.OfflineSecondsApplied} second(s)"
                 : $"{Math.Ceiling(_player.OfflineSecondsApplied / 60d)} minute(s)";
 
             MessageService.Add(
-                $"You earned {_player.OfflineCoinsEarned} coins over {timeText}",
+                $"You earned {_player.OfflineEnergyEarned} energy over {timeText}",
                 "success"
             );
         }
 
         return Task.CompletedTask;
     }
+
     private bool ValidateCredentials()
     {
         var name = _playerName.Trim();
@@ -367,6 +500,7 @@ else
                 _player = null;
                 PlayerUiState.Clear();
                 _upgrades = [];
+                _selectedCoreIds.Clear();
             }
 
             _tokenStatus = "(none)";
@@ -388,8 +522,10 @@ else
 
         _autoTickCts = new CancellationTokenSource();
         _autoTickTask = RunAutoTickAsync(_autoTickCts.Token);
-    }
 
+        // NEW
+        EnsureAutoSpawnRunning();
+    }
     private async Task RunAutoTickAsync(CancellationToken ct)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
@@ -412,16 +548,71 @@ else
         {
         }
     }
+    private void EnsureAutoSpawnRunning()
+    {
+        if (_player is null)
+            return;
+
+        if (_spawnTask is not null && !_spawnTask.IsCompleted)
+            return;
+
+        _spawnCts = new CancellationTokenSource();
+        _spawnTask = RunAutoSpawnAsync(_spawnCts.Token);
+    }
+    private async Task RunAutoSpawnAsync(CancellationToken ct)
+    {
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(100, ct);
+
+                if (_player is null)
+                    continue;
+
+                if (IsBoardFull())
+                {
+                    _lastSpawnTime = DateTime.UtcNow;
+                    await InvokeAsync(StateHasChanged);
+                    continue;
+                }
+
+                var elapsed = (DateTime.UtcNow - _lastSpawnTime).TotalSeconds;
+                var progress = elapsed / SpawnIntervalSeconds;
+
+                if (progress >= 1)
+                {
+                    _lastSpawnTime = DateTime.UtcNow;
+
+                    if (!_isBusy)
+                    {
+                        await SpawnCore();
+                    }
+                }
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
 
     private void StopAutoTick()
     {
-        if (_autoTickCts is null)
-            return;
-
+        if (_autoTickCts is not null)
         _autoTickCts.Cancel();
         _autoTickCts.Dispose();
         _autoTickCts = null;
         _autoTickTask = null;
+
+        if (_spawnCts is not null)
+        {
+        _spawnCts.Cancel();
+        _spawnCts.Dispose();
+        _spawnCts = null;
+		_spawnTask = null;
+        }
     }
 
     private void ClearError()
@@ -448,16 +639,21 @@ else
         StopAutoTick();
         return ValueTask.CompletedTask;
     }
+
     private void SyncPlayerUiState()
     {
-    PlayerUiState.SetPlayer(_player);
+        PlayerUiState.SetPlayer(_player);
     }
+
     private void UpdatePlayer(PlayerResponse newPlayer, bool showLevelUpMessage = true)
     {
         var oldLevel = _player?.Level ?? 0;
 
         _player = newPlayer;
         SyncPlayerUiState();
+
+        var validCoreIds = _player.Cores.Select(c => c.Id).ToHashSet();
+        _selectedCoreIds.RemoveWhere(id => !validCoreIds.Contains(id));
 
         if (showLevelUpMessage && newPlayer.Level > oldLevel)
         {

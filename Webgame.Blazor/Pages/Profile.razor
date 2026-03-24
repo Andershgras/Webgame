@@ -23,15 +23,42 @@ else
 {
     <p><b>Name:</b> @_player.Name</p>
     <p><b>Level:</b> @_player.Level</p>
-    <p><b>Coins:</b> @_player.Coins</p>
+    <p><b>Energy:</b> @_player.Energy</p>
+    <p><b>Stellar Energy:</b> @_player.StellarEnergy</p>
+    <p><b>Storm Energy:</b> @_player.StormEnergy</p>
+
+    <h4>Board</h4>
+    <p><b>Board Slots:</b> @_player.BoardSlotCount</p>
+    <p><b>Owned Cores:</b> @_player.Cores.Count</p>
+    <p><b>Total Production / Second:</b> @GetTotalBoardProduction()</p>
+
+    @if (_player.Cores.Count > 0)
+    {
+        <div style="margin-bottom:16px;">
+            @foreach (var core in _player.Cores.OrderBy(c => c.SlotIndex))
+            {
+                <div style="padding:8px; border:1px solid #ddd; margin-bottom:8px; border-radius:8px;">
+                    <b>Slot @core.SlotIndex</b> - Tier @core.Tier
+                    <div style="opacity:0.8;">+@core.ProductionPerSecond energy/sec</div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>No cores yet.</p>
+    }
+
+    <h4>Current Progression</h4>
     <p><b>Click Power:</b> @_player.ClickPower</p>
-    <p><b>Clicks Per Second:</b> @_player.ClicksPerSecond</p>
+    <p><b>Legacy Production / Second:</b> @_player.ClicksPerSecond</p>
     <p><b>Offline Cap:</b> @(_player.OfflineCapSeconds / 60) min</p>
 
     <h4>Lifetime Stats</h4>
     <p><b>Total Clicks:</b> @_player.TotalClicks</p>
-    <p><b>Total Coins Earned:</b> @_player.TotalCoinsEarned</p>
-    <p><b>Total Coins Spent:</b> @_player.TotalCoinsSpent</p>
+    <p><b>Total Energy Earned:</b> @_player.TotalEnergyEarned</p>
+    <p><b>Total Energy Spent:</b> @_player.TotalEnergySpent</p>
+    <p><b>Total Merges:</b> @_player.TotalMerges</p>
 
     <button @onclick="Logout">Logout</button>
 }
@@ -74,6 +101,11 @@ else
         {
             _loading = false;
         }
+    }
+
+    private long GetTotalBoardProduction()
+    {
+        return _player?.Cores.Sum(c => c.ProductionPerSecond) ?? 0;
     }
 
     private async Task Logout()

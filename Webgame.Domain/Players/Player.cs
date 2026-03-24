@@ -10,10 +10,11 @@ public sealed class Player : Entity<PlayerId>
     public string Name { get; private set; }
     public string PasswordHash { get; private set; }
     public Stats Stats { get; private set; }
+    public Board Board { get; private set; }
 
     // Offline progress
     public DateTime LastActiveUtc { get; private set; } = DateTime.UtcNow;
-    private long _pendingOfflineCoins;
+    private long _pendingOfflineEnergy;
     private int _pendingOfflineSeconds;
 
     public Player(PlayerId id, string name, string passwordHash) : base(id)
@@ -21,6 +22,7 @@ public sealed class Player : Entity<PlayerId>
         Name = ValidateName(name);
         PasswordHash = ValidatePasswordHash(passwordHash);
         Stats = new Stats();
+        Board = new Board();
     }
 
     public void Rename(string newName)
@@ -57,11 +59,8 @@ public sealed class Player : Entity<PlayerId>
     {
         Stats.RegisterClick();
 
-        var coinsGained = Stats.ClickPower;
-        Stats.AddCoins(coinsGained);
-
-        var xpGained = Math.Max(1, (long)Math.Ceiling(Stats.ClickPower * 1.5));
-        Stats.AddExperience(xpGained);
+        var energyGained = Stats.ClickPower;
+        Stats.AddEnergy(energyGained);
     }
 
     public static bool TryCreate(string name, string passwordHash, out Player? player)
@@ -97,14 +96,10 @@ public sealed class Player : Entity<PlayerId>
     {
         cost = GetClickPowerUpgradeCost();
 
-        if (!Stats.TrySpendCoins(cost))
+        if (!Stats.TrySpendEnergy(cost))
             return false;
 
         Stats.UpgradeClickPower();
-
-        var xpGained = Math.Max(1, cost / 10);
-        Stats.AddExperience(xpGained);
-
         return true;
     }
 
@@ -116,25 +111,70 @@ public sealed class Player : Entity<PlayerId>
     public bool TryUpgradeAutoClicker(out long cost)
     {
         cost = GetAutoClickerUpgradeCost();
-        if (!Stats.TrySpendCoins(cost)) return false;
+
+        if (!Stats.TrySpendEnergy(cost))
+            return false;
 
         Stats.UpgradeAutoClicker();
-
-        var xpGained = Math.Max(1, cost / 10);
-        Stats.AddExperience(xpGained);
-
         return true;
+    }
+
+    public long GetOfflineCapUpgradeCost()
+    {
+        return 500L * (Stats.OfflineCapLevel + 1);
+    }
+
+    public bool TryUpgradeOfflineCap(out long cost)
+    {
+        cost = GetOfflineCapUpgradeCost();
+
+        if (!Stats.TrySpendEnergy(cost))
+            return false;
+
+        Stats.UpgradeOfflineCap();
+        return true;
+    }
+
+    // -------------------------
+    // CORE SYSTEM
+    // -------------------------
+
+    public bool TrySpawnCore()
+    {
+        return Board.TrySpawnTier1Core(out _);
+    }
+
+    public bool TryMergeCores(Guid firstCoreId, Guid secondCoreId, out long xpGained)
+    {
+        xpGained = 0;
+
+        if (!Board.TryMerge(firstCoreId, secondCoreId, out var merged) || merged is null)
+            return false;
+
+        xpGained = merged.Tier;
+
+        // XP is awarded only on merge
+        Stats.RegisterMerge(xpGained, 0);
+        return true;
+    }
+
+    public long GetProductionPerSecond()
+    {
+        var baseProduction = Board.GetProductionPerSecond();
+
+        if (baseProduction <= 0)
+            return 0;
+
+        // Future: Stellar / Star boosts go here
+        return baseProduction;
     }
 
     public void Tick()
     {
-        var coins = Stats.AutoCoinsPerTick;
-        if (coins > 0)
-            Stats.AddCoins(coins);
+        var energy = GetProductionPerSecond();
 
-        var xpGained = Math.Max(0, (long)Math.Ceiling(Stats.AutoCoinsPerTick * 0.5));
-        if (xpGained > 0)
-            Stats.AddExperience(xpGained);
+        if (energy > 0)
+            Stats.AddEnergy(energy);
     }
 
     public void CalculateOfflineProgress(DateTime nowUtc)
@@ -148,28 +188,26 @@ public sealed class Player : Entity<PlayerId>
         var elapsedSeconds = (int)Math.Floor((nowUtc - LastActiveUtc).TotalSeconds);
         var cappedSeconds = Math.Min(elapsedSeconds, Stats.OfflineCapSeconds);
 
-        if (cappedSeconds > 0 && Stats.AutoCoinsPerTick > 0)
+        var productionPerSecond = GetProductionPerSecond();
+
+        if (cappedSeconds > 0 && productionPerSecond > 0)
         {
-            var coins = (long)cappedSeconds * Stats.AutoCoinsPerTick;
+            var energyEarned = (long)cappedSeconds * productionPerSecond;
 
-            Stats.AddCoins(coins);
+            Stats.AddEnergy(energyEarned);
 
-            var xp = (long)Math.Ceiling(cappedSeconds * Stats.AutoCoinsPerTick * 0.5);
-            if (xp > 0)
-                Stats.AddExperience(xp);
-
-            _pendingOfflineCoins = coins;
+            _pendingOfflineEnergy = energyEarned;
             _pendingOfflineSeconds = cappedSeconds;
         }
 
         LastActiveUtc = nowUtc;
     }
 
-    public (long CoinsEarned, int SecondsApplied) ConsumeOfflineProgress()
+    public (long EnergyEarned, int SecondsApplied) ConsumeOfflineProgress()
     {
-        var result = (_pendingOfflineCoins, _pendingOfflineSeconds);
+        var result = (_pendingOfflineEnergy, _pendingOfflineSeconds);
 
-        _pendingOfflineCoins = 0;
+        _pendingOfflineEnergy = 0;
         _pendingOfflineSeconds = 0;
 
         return result;
@@ -178,25 +216,5 @@ public sealed class Player : Entity<PlayerId>
     public void Touch()
     {
         LastActiveUtc = DateTime.UtcNow;
-    }
-
-    public long GetOfflineCapUpgradeCost()
-    {
-        return 500L * (Stats.OfflineCapLevel + 1);
-    }
-
-    public bool TryUpgradeOfflineCap(out long cost)
-    {
-        cost = GetOfflineCapUpgradeCost();
-
-        if (!Stats.TrySpendCoins(cost))
-            return false;
-
-        Stats.UpgradeOfflineCap();
-
-        var xpGained = Math.Max(1, cost / 10);
-        Stats.AddExperience(xpGained);
-
-        return true;
     }
 }

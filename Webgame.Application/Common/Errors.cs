@@ -34,6 +34,11 @@ public static class Errors
 
     public static readonly Error InvalidCredentials =
         new("player.invalid_credentials", "Invalid username or password.", ErrorType.Validation);
+
+    // NEW (for upcoming gameplay systems)
+    public static readonly Error BoardIsFull =
+        new("board.full", "The board is full.", ErrorType.Conflict);
+
+    public static readonly Error InvalidMerge =
+        new("board.invalid_merge", "Those cores cannot be merged.", ErrorType.Validation);
 }
-
-

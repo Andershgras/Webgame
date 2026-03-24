@@ -27,26 +27,27 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
         if (player is null)
             return Result<IReadOnlyList<UpgradeCatalogEntry>>.Fail(Errors.PlayerNotFound);
 
-        var cost = player.GetClickPowerUpgradeCost();
+        var clickCost = player.GetClickPowerUpgradeCost();
         var autoCost = player.GetAutoClickerUpgradeCost();
         var offlineCost = player.GetOfflineCapUpgradeCost();
+
         IReadOnlyList<UpgradeCatalogEntry> list = new List<UpgradeCatalogEntry>
         {
             new(
                 Key: "click_power",
                 Name: "Click Power",
                 CurrentLevel: player.Stats.ClickPowerLevel,
-                NextCost: cost,
-                EffectDescription: "+1 Click Power",
-                CanAfford: player.Stats.Coins >= cost
+                NextCost: clickCost,
+                EffectDescription: "+1 Energy per click",
+                CanAfford: player.Stats.Energy >= clickCost
             ),
             new(
                 Key: "auto_clicker",
-                Name: "Auto Clicker",
+                Name: "Auto Production",
                 CurrentLevel: player.Stats.AutoClickerLevel,
                 NextCost: autoCost,
-                EffectDescription: $"+1 coin per tick (now {player.Stats.AutoCoinsPerTick}/tick)",
-                CanAfford: player.Stats.Coins >= autoCost
+                EffectDescription: $"+1 energy/sec (now {player.Stats.AutoCoinsPerTick}/sec)",
+                CanAfford: player.Stats.Energy >= autoCost
             ),
             new(
                 Key: "offline_cap",
@@ -54,7 +55,7 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
                 CurrentLevel: player.Stats.OfflineCapLevel,
                 NextCost: offlineCost,
                 EffectDescription: $"+30 min offline cap (now {player.Stats.OfflineCapSeconds / 60} min)",
-                CanAfford: player.Stats.Coins >= offlineCost
+                CanAfford: player.Stats.Energy >= offlineCost
             ),
         };
 

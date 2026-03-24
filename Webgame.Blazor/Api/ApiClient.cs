@@ -44,6 +44,23 @@ public sealed class ApiClient
         return await ReadOrThrowAsync<PlayerResponse>(res);
     }
 
+    public async Task<PlayerResponse> SpawnCoreAsync()
+    {
+        var res = await _http.PostAsync("api/players/me/cores/spawn", null);
+        return await ReadOrThrowAsync<PlayerResponse>(res);
+    }
+
+    public async Task<PlayerResponse> MergeCoresAsync(Guid firstCoreId, Guid secondCoreId)
+    {
+        var res = await _http.PostAsJsonAsync("api/players/me/cores/merge", new
+        {
+            firstCoreId,
+            secondCoreId
+        });
+
+        return await ReadOrThrowAsync<PlayerResponse>(res);
+    }
+
     public async Task DeleteAsync()
     {
         var res = await _http.DeleteAsync("api/players/me");
@@ -63,15 +80,23 @@ public sealed class ApiClient
         return await ReadOrThrowAsync<UpgradePurchaseResponse>(res);
     }
 
-    public async Task<IReadOnlyList<LeaderboardEntry>> GetLeaderboardAsync(int top = 10, LeaderboardType type = LeaderboardType.TotalClicks)
+    public async Task<IReadOnlyList<LeaderboardEntry>> GetLeaderboardAsync(
+        int top = 10,
+        LeaderboardType type = LeaderboardType.TotalClicks)
     {
-        var res = await _http.GetAsync($"api/leaderboard?top={top}&type={Uri.EscapeDataString(type.ToString())}");
+        var res = await _http.GetAsync(
+            $"api/leaderboard?top={top}&type={Uri.EscapeDataString(type.ToString())}");
+
         return await ReadOrThrowAsync<IReadOnlyList<LeaderboardEntry>>(res);
     }
 
-    public async Task<int> GetLeaderboardRankAsync(Guid playerId, LeaderboardType type = LeaderboardType.TotalClicks)
+    public async Task<int> GetLeaderboardRankAsync(
+        Guid playerId,
+        LeaderboardType type = LeaderboardType.TotalClicks)
     {
-        var res = await _http.GetAsync($"api/leaderboard/rank?playerId={playerId}&type={Uri.EscapeDataString(type.ToString())}");
+        var res = await _http.GetAsync(
+            $"api/leaderboard/rank?playerId={playerId}&type={Uri.EscapeDataString(type.ToString())}");
+
         return await ReadOrThrowAsync<int>(res);
     }
 

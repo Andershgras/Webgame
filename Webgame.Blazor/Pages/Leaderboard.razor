@@ -104,8 +104,14 @@ else
     private readonly List<LeaderboardOption> _options =
     [
         new(LeaderboardType.TotalClicks, "Most Total Clicks"),
-        new(LeaderboardType.TotalCoinsEarned, "Most Total Coins Earned"),
-        new(LeaderboardType.TotalCoinsSpent, "Most Total Coins Spent")
+        new(LeaderboardType.TotalEnergyEarned, "Most Total Energy Earned"),
+        new(LeaderboardType.TotalEnergySpent, "Most Total Energy Spent"),
+        new(LeaderboardType.TotalMerges, "Most Total Merges"),
+        new(LeaderboardType.Level, "Highest Level"),
+
+        // Legacy options kept for compatibility if needed
+        new(LeaderboardType.TotalCoinsEarned, "Most Total Energy Earned (Legacy)"),
+        new(LeaderboardType.TotalCoinsSpent, "Most Total Energy Spent (Legacy)")
     ];
 
     protected override async Task OnInitializedAsync()
@@ -122,6 +128,7 @@ else
                 await Session.ClearAsync();
                 _myId = null;
                 _error = "Your session expired. Please log in again.";
+                _traceId = apiEx.Trace;
             }
             else
             {
@@ -189,16 +196,24 @@ else
     private static string GetLeaderboardLabel(LeaderboardType type) => type switch
     {
         LeaderboardType.TotalClicks => "Most Total Clicks",
-        LeaderboardType.TotalCoinsEarned => "Most Total Coins Earned",
-        LeaderboardType.TotalCoinsSpent => "Most Total Coins Spent",
+        LeaderboardType.TotalCoinsEarned => "Most Total Energy Earned",
+        LeaderboardType.TotalCoinsSpent => "Most Total Energy Spent",
+        LeaderboardType.TotalEnergyEarned => "Most Total Energy Earned",
+        LeaderboardType.TotalEnergySpent => "Most Total Energy Spent",
+        LeaderboardType.TotalMerges => "Most Total Merges",
+        LeaderboardType.Level => "Highest Level",
         _ => type.ToString()
     };
 
     private static string GetValueColumnHeader(LeaderboardType type) => type switch
     {
         LeaderboardType.TotalClicks => "Total Clicks",
-        LeaderboardType.TotalCoinsEarned => "Total Coins Earned",
-        LeaderboardType.TotalCoinsSpent => "Total Coins Spent",
+        LeaderboardType.TotalCoinsEarned => "Total Energy Earned",
+        LeaderboardType.TotalCoinsSpent => "Total Energy Spent",
+        LeaderboardType.TotalEnergyEarned => "Total Energy Earned",
+        LeaderboardType.TotalEnergySpent => "Total Energy Spent",
+        LeaderboardType.TotalMerges => "Total Merges",
+        LeaderboardType.Level => "Level",
         _ => "Value"
     };
 

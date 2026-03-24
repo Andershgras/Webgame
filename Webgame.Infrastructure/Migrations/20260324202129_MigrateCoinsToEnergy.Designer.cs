@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Webgame.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Webgame.Infrastructure.Persistence;
 namespace Webgame.Infrastructure.Migrations
 {
     [DbContext(typeof(WebgameDbContext))]
-    partial class WebgameDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260324202129_MigrateCoinsToEnergy")]
+    partial class MigrateCoinsToEnergy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,49 +52,6 @@ namespace Webgame.Infrastructure.Migrations
 
             modelBuilder.Entity("Webgame.Domain.Players.Player", b =>
                 {
-                    b.OwnsOne("Webgame.Domain.Players.Board", "Board", b1 =>
-                        {
-                            b1.Property<Guid>("PlayerId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<int>("SlotCount")
-                                .HasColumnType("int")
-                                .HasColumnName("BoardSlotCount");
-
-                            b1.HasKey("PlayerId");
-
-                            b1.ToTable("Players");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PlayerId");
-
-                            b1.OwnsMany("Webgame.Domain.Players.CoreInstance", "Cores", b2 =>
-                                {
-                                    b2.Property<Guid>("Id")
-                                        .HasColumnType("uniqueidentifier");
-
-                                    b2.Property<Guid>("PlayerId")
-                                        .HasColumnType("uniqueidentifier");
-
-                                    b2.Property<int>("SlotIndex")
-                                        .HasColumnType("int");
-
-                                    b2.Property<int>("Tier")
-                                        .HasColumnType("int");
-
-                                    b2.HasKey("Id");
-
-                                    b2.HasIndex("PlayerId");
-
-                                    b2.ToTable("PlayerCores", (string)null);
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("PlayerId");
-                                });
-
-                            b1.Navigation("Cores");
-                        });
-
                     b.OwnsOne("Webgame.Domain.Players.Stats", "Stats", b1 =>
                         {
                             b1.Property<Guid>("PlayerId")
@@ -160,9 +120,6 @@ namespace Webgame.Infrastructure.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("PlayerId");
                         });
-
-                    b.Navigation("Board")
-                        .IsRequired();
 
                     b.Navigation("Stats")
                         .IsRequired();

@@ -82,6 +82,58 @@ public sealed class PlayerService
 
         player.Click();
         player.Touch();
+
+        _repo.Update(player);
+        await _uow.SaveChangesAsync(ct);
+
+        return Result<Player>.Ok(player);
+    }
+
+    public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
+    {
+        var player = await _repo.GetByIdAsync(id, ct);
+        if (player is null)
+            return Result<Player>.Fail(Errors.PlayerNotFound);
+
+        player.Tick();
+        player.Touch();
+
+        _repo.Update(player);
+        await _uow.SaveChangesAsync(ct);
+
+        return Result<Player>.Ok(player);
+    }
+
+    public async Task<Result<Player>> SpawnCoreAsync(PlayerId id, CancellationToken ct)
+    {
+        var player = await _repo.GetByIdAsync(id, ct);
+        if (player is null)
+            return Result<Player>.Fail(Errors.PlayerNotFound);
+
+        var success = player.TrySpawnCore();
+        if (!success)
+            return Result<Player>.Fail(Errors.BoardIsFull);
+
+        player.Touch();
+
+        _repo.Update(player);
+        await _uow.SaveChangesAsync(ct);
+
+        return Result<Player>.Ok(player);
+    }
+
+    public async Task<Result<Player>> MergeCoresAsync(PlayerId id, Guid firstCoreId, Guid secondCoreId, CancellationToken ct)
+    {
+        var player = await _repo.GetByIdAsync(id, ct);
+        if (player is null)
+            return Result<Player>.Fail(Errors.PlayerNotFound);
+
+        var success = player.TryMergeCores(firstCoreId, secondCoreId, out _);
+        if (!success)
+            return Result<Player>.Fail(Errors.InvalidMerge);
+
+        player.Touch();
+
         _repo.Update(player);
         await _uow.SaveChangesAsync(ct);
 
@@ -91,7 +143,8 @@ public sealed class PlayerService
     public async Task<Result> DeletePlayerAsync(PlayerId id, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
-        if (player is null) return Result.Fail(Errors.PlayerNotFound);
+        if (player is null)
+            return Result.Fail(Errors.PlayerNotFound);
 
         _repo.Remove(player);
         await _uow.SaveChangesAsync(ct);
@@ -102,11 +155,12 @@ public sealed class PlayerService
     public async Task<Result<UpgradePurchaseResult>> BuyUpgradeAsync(PlayerId id, string key, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
-        if (player is null) return Result<UpgradePurchaseResult>.Fail(Errors.PlayerNotFound);
+        if (player is null)
+            return Result<UpgradePurchaseResult>.Fail(Errors.PlayerNotFound);
 
         key = (key ?? "").Trim().ToLowerInvariant();
 
-        bool? success;
+        bool success;
         long cost;
         int newLevel;
 
@@ -131,26 +185,16 @@ public sealed class PlayerService
                 return Result<UpgradePurchaseResult>.Fail(Errors.InvalidUpgradeKey);
         }
 
-        if (success is false)
+        if (!success)
             return Result<UpgradePurchaseResult>.Fail(Errors.NotEnoughCoins);
 
-        _repo.Update(player);
         player.Touch();
-        await _uow.SaveChangesAsync(ct);
 
-        return Result<UpgradePurchaseResult>.Ok(new UpgradePurchaseResult(key, cost, newLevel, player));
-    }
-
-    public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
-    {
-        var player = await _repo.GetByIdAsync(id, ct);
-        if (player is null) return Result<Player>.Fail(Errors.PlayerNotFound);
-
-        player.Tick();
-        player.Touch();
         _repo.Update(player);
         await _uow.SaveChangesAsync(ct);
 
-        return Result<Player>.Ok(player);
+        return Result<UpgradePurchaseResult>.Ok(
+            new UpgradePurchaseResult(key, cost, newLevel, player)
+        );
     }
 }

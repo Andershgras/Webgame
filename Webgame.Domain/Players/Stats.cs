@@ -12,10 +12,17 @@ public sealed class Stats
     public long Experience { get; private set; } = 0;
     public long ExperienceToNextLevel { get; private set; } = CalculateExperienceToNextLevel(1);
 
-    // Currency
-    public long Coins { get; private set; } = 0;
+    // Main run currency
+    public long Energy { get; private set; } = 0;
 
-    // Upgrades
+    // Permanent currencies
+    public long StellarEnergy { get; private set; } = 0;
+    public long StormEnergy { get; private set; } = 0;
+
+    // Legacy compatibility
+    public long Coins => Energy;
+
+    // Temporary legacy clicker upgrades
     public int ClickPower { get; private set; } = 1;
     public int ClickPowerLevel { get; private set; } = 1;
     public int AutoClickerLevel { get; private set; } = 0;
@@ -24,14 +31,15 @@ public sealed class Stats
     public int OfflineCapLevel { get; private set; } = 0;
     public int OfflineCapSeconds => 3600 + (OfflineCapLevel * 1800);
 
-    // Helpers
+    // Legacy helpers
     public int AutoCoinsPerTick => AutoClickerLevel;
     public int ClicksPerSecond => AutoClickerLevel;
 
     // Lifetime
     public long TotalClicks { get; private set; }
-    public long TotalCoinsEarned { get; private set; }
-    public long TotalCoinsSpent { get; private set; }
+    public long TotalEnergyEarned { get; private set; }
+    public long TotalEnergySpent { get; private set; }
+    public long TotalMerges { get; private set; }
 
     public void UpgradeOfflineCap()
     {
@@ -54,24 +62,73 @@ public sealed class Stats
         TotalClicks++;
     }
 
-    public void AddCoins(long amount)
+    public void RegisterMerge(long xpGained, long stormEnergyReward = 0)
+    {
+        TotalMerges++;
+
+        if (xpGained > 0)
+            AddExperience(xpGained);
+
+        if (stormEnergyReward > 0)
+            AddStormEnergy(stormEnergyReward);
+    }
+
+    public void AddEnergy(long amount)
     {
         if (amount < 0)
             throw new ArgumentOutOfRangeException(nameof(amount));
 
-        Coins += amount;
-        TotalCoinsEarned += amount;
+        Energy += amount;
+        TotalEnergyEarned += amount;
     }
 
-    public bool TrySpendCoins(long amount)
+    public bool TrySpendEnergy(long amount)
     {
         if (amount < 0) return false;
-        if (Coins < amount) return false;
+        if (Energy < amount) return false;
 
-        Coins -= amount;
-        TotalCoinsSpent += amount;
+        Energy -= amount;
+        TotalEnergySpent += amount;
         return true;
     }
+
+    public void AddStellarEnergy(long amount)
+    {
+        if (amount < 0)
+            throw new ArgumentOutOfRangeException(nameof(amount));
+
+        StellarEnergy += amount;
+    }
+
+    public bool TrySpendStellarEnergy(long amount)
+    {
+        if (amount < 0) return false;
+        if (StellarEnergy < amount) return false;
+
+        StellarEnergy -= amount;
+        return true;
+    }
+
+    public void AddStormEnergy(long amount)
+    {
+        if (amount < 0)
+            throw new ArgumentOutOfRangeException(nameof(amount));
+
+        StormEnergy += amount;
+    }
+
+    public bool TrySpendStormEnergy(long amount)
+    {
+        if (amount < 0) return false;
+        if (StormEnergy < amount) return false;
+
+        StormEnergy -= amount;
+        return true;
+    }
+
+    // Compatibility wrappers so existing code can still work while we migrate
+    public void AddCoins(long amount) => AddEnergy(amount);
+    public bool TrySpendCoins(long amount) => TrySpendEnergy(amount);
 
     public void AddExperience(long amount)
     {
