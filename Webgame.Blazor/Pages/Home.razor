@@ -85,7 +85,6 @@ else
         </div>
     </div>
 }
-<button @onclick="ShowTestMessage">Test Message</button>
 @if (!string.IsNullOrWhiteSpace(_error))
 {
     <div style="border:1px solid #f00; padding:12px; margin-bottom:12px;">
@@ -134,8 +133,8 @@ else
 
         try
         {
-            _player = await Api.GetMeAsync();
-            SyncPlayerUiState();
+            var me = await Api.GetMeAsync();
+            UpdatePlayer(me, showLevelUpMessage: false);
             await HandleOfflineRewardAsync();
             await LoadUpgrades();
             EnsureAutoTickRunning();
@@ -164,8 +163,8 @@ else
             await Session.SetTokenAsync(login.Token);
 
             _tokenStatus = "(present)";
-            _player = await Api.GetMeAsync();
-            SyncPlayerUiState();
+            var me = await Api.GetMeAsync();
+            UpdatePlayer(me, showLevelUpMessage: false);
 
             await HandleOfflineRewardAsync();
             await LoadUpgrades();
@@ -197,8 +196,8 @@ else
             await Session.SetTokenAsync(login.Token);
 
             _tokenStatus = "(present)";
-            _player = await Api.GetMeAsync();
-            SyncPlayerUiState();
+            var me = await Api.GetMeAsync();
+            UpdatePlayer(me, showLevelUpMessage: false);
 
             await HandleOfflineRewardAsync();
             await LoadUpgrades();
@@ -225,8 +224,8 @@ else
 
         try
         {
-            _player = await Api.ClickAsync();
-            SyncPlayerUiState();
+            var updatedPlayer = await Api.ClickAsync();
+            UpdatePlayer(updatedPlayer);
             await LoadUpgrades();
         }
         catch (Exception ex)
@@ -249,8 +248,8 @@ else
 
         try
         {
-            _player = await Api.TickAsync();
-            SyncPlayerUiState();
+            var updatedPlayer = await Api.TickAsync();
+            UpdatePlayer(updatedPlayer);
             await LoadUpgrades();
         }
         catch (Exception ex)
@@ -274,8 +273,7 @@ else
         try
         {
             var res = await Api.BuyUpgradeAsync(key);
-            _player = res.Player;
-            SyncPlayerUiState();
+            UpdatePlayer(res.Player);
             await LoadUpgrades();
         }
         catch (Exception ex)
@@ -444,8 +442,16 @@ else
     {
     PlayerUiState.SetPlayer(_player);
     }
-    private void ShowTestMessage()
+    private void UpdatePlayer(PlayerResponse newPlayer, bool showLevelUpMessage = true)
     {
-        MessageService.Add("TEST MESSAGE WORKS", "success");
+        var oldLevel = _player?.Level ?? 0;
+
+        _player = newPlayer;
+        SyncPlayerUiState();
+
+        if (showLevelUpMessage && newPlayer.Level > oldLevel)
+        {
+            MessageService.Add($"Level up! You reached level {newPlayer.Level}", "success");
+        }
     }
 }
