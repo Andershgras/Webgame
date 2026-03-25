@@ -33,12 +33,18 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
         var offlineProductionMaxed = player.Stats.OfflineProductionLevel >= Stats.MaxOfflineProductionLevel;
         var moreStellarEnergyMaxed = player.Stats.MoreStellarEnergyLevel >= Stats.MaxMoreStellarEnergyLevel;
 
+        var fasterLevelUpMaxed = player.Stats.FasterLevelUpLevel >= Stats.MaxFasterLevelUpLevel;
+        var stellarMoreStellarEnergyMaxed = player.Stats.StellarMoreStellarEnergyLevel >= Stats.MaxStellarMoreStellarEnergyLevel;
+
         var offlineCapCost = player.GetOfflineCapUpgradeCost();
         var fasterCoresCost = player.GetFasterCoresUpgradeCost();
         var betterCoresCost = player.GetBetterCoresUpgradeCost();
         var betterCores2Cost = player.GetBetterCores2UpgradeCost();
         var offlineProductionCost = player.GetOfflineProductionUpgradeCost();
         var moreStellarEnergyCost = player.GetMoreStellarEnergyUpgradeCost();
+
+        var fasterLevelUpCost = player.GetFasterLevelUpUpgradeCost();
+        var stellarMoreStellarEnergyCost = player.GetStellarMoreStellarEnergyUpgradeCost();
 
         IReadOnlyList<UpgradeCatalogEntry> list = new List<UpgradeCatalogEntry>
         {
@@ -50,7 +56,8 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
                 EffectDescription: fasterCoresMaxed
                     ? $"MAX - spawn interval is {player.GetSpawnIntervalSeconds():0.0}s"
                     : $"-0.1s spawn interval (now {player.GetSpawnIntervalSeconds():0.0}s / max {Stats.MaxFasterCoresLevel})",
-                CanAfford: !fasterCoresMaxed && player.Stats.Energy >= fasterCoresCost
+                CanAfford: !fasterCoresMaxed && player.Stats.Energy >= fasterCoresCost,
+                CurrencyType: "energy"
             ),
 
             new(
@@ -61,7 +68,8 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
                 EffectDescription: betterCoresMaxed
                     ? $"MAX - base spawn tier is {player.GetBaseSpawnTier()}"
                     : $"+1 base spawn tier (now tier {player.GetBaseSpawnTier()} / max {Stats.MaxBetterCoresLevel})",
-                CanAfford: !betterCoresMaxed && player.Stats.Energy >= betterCoresCost
+                CanAfford: !betterCoresMaxed && player.Stats.Energy >= betterCoresCost,
+                CurrencyType: "energy"
             ),
 
             new(
@@ -72,7 +80,8 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
                 EffectDescription: betterCores2Maxed
                     ? $"MAX - {player.Stats.BetterCores2Level}% chance for +1 extra tier"
                     : $"+1% chance for +1 extra tier (now {player.Stats.BetterCores2Level}% / max {Stats.MaxBetterCores2Level}%)",
-                CanAfford: !betterCores2Maxed && player.Stats.Energy >= betterCores2Cost
+                CanAfford: !betterCores2Maxed && player.Stats.Energy >= betterCores2Cost,
+                CurrencyType: "energy"
             ),
 
             new(
@@ -83,7 +92,8 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
                 EffectDescription: offlineProductionMaxed
                     ? $"MAX - offline production is +{player.Stats.OfflineProductionLevel}%"
                     : $"+1% offline production (now +{player.Stats.OfflineProductionLevel}% / max {Stats.MaxOfflineProductionLevel}%)",
-                CanAfford: !offlineProductionMaxed && player.Stats.Energy >= offlineProductionCost
+                CanAfford: !offlineProductionMaxed && player.Stats.Energy >= offlineProductionCost,
+                CurrencyType: "energy"
             ),
 
             new(
@@ -94,7 +104,8 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
                 EffectDescription: moreStellarEnergyMaxed
                     ? $"MAX - {player.GetStellarEnergyMergeChance() * 100:0.0}% merge chance"
                     : $"+0.1% Stellar Energy chance on merge (now {player.GetStellarEnergyMergeChance() * 100:0.0}% / max {Stats.MaxMoreStellarEnergyLevel})",
-                CanAfford: !moreStellarEnergyMaxed && player.Stats.Energy >= moreStellarEnergyCost
+                CanAfford: !moreStellarEnergyMaxed && player.Stats.Energy >= moreStellarEnergyCost,
+                CurrencyType: "energy"
             ),
 
             new(
@@ -103,7 +114,32 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
                 CurrentLevel: player.Stats.OfflineCapLevel,
                 NextCost: offlineCapCost,
                 EffectDescription: $"+30 min offline cap (now {player.Stats.OfflineCapSeconds / 60} min)",
-                CanAfford: player.Stats.Energy >= offlineCapCost
+                CanAfford: player.Stats.Energy >= offlineCapCost,
+                CurrencyType: "energy"
+            ),
+
+            new(
+                Key: "faster_level_up",
+                Name: "Faster Level Up",
+                CurrentLevel: player.Stats.FasterLevelUpLevel,
+                NextCost: fasterLevelUpMaxed ? 0 : fasterLevelUpCost,
+                EffectDescription: fasterLevelUpMaxed
+                    ? $"MAX - {player.GetMergeXpMultiplier():0.0}x merge XP"
+                    : $"+10% merge XP (now {player.GetMergeXpMultiplier():0.0}x / max {Stats.MaxFasterLevelUpLevel})",
+                CanAfford: !fasterLevelUpMaxed && player.Stats.StellarEnergy >= fasterLevelUpCost,
+                CurrencyType: "stellar"
+            ),
+
+            new(
+                Key: "stellar_more_stellar_energy",
+                Name: "More Stellar Energy",
+                CurrentLevel: player.Stats.StellarMoreStellarEnergyLevel,
+                NextCost: stellarMoreStellarEnergyMaxed ? 0 : stellarMoreStellarEnergyCost,
+                EffectDescription: stellarMoreStellarEnergyMaxed
+                    ? $"MAX - {player.GetStellarEnergySpawnChance() * 100:0.0}% spawn chance"
+                    : $"+2% Stellar Energy chance on spawn (now {player.GetStellarEnergySpawnChance() * 100:0.0}% / max {Stats.MaxStellarMoreStellarEnergyLevel})",
+                CanAfford: !stellarMoreStellarEnergyMaxed && player.Stats.StellarEnergy >= stellarMoreStellarEnergyCost,
+                CurrencyType: "stellar"
             )
         };
 

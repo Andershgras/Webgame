@@ -70,6 +70,9 @@ else
                 var elapsed = (DateTime.UtcNow - _lastSpawnTime).TotalSeconds;
                 var interval = GetSpawnIntervalSeconds();
                 var seconds = Math.Min(interval, elapsed);
+
+                var energyUpgrades = _upgrades.Where(x => x.CurrencyType == "energy").ToList();
+                var stellarUpgrades = _upgrades.Where(x => x.CurrencyType == "stellar").ToList();
             }
 
             <div style="margin-bottom:20px;">
@@ -118,17 +121,40 @@ else
                 </div>
             </div>
 
-            <div style="margin:0 auto; max-width:620px; text-align:left;">
-                <h3 style="text-align:center; margin-bottom:12px;">Upgrades</h3>
+            <div style="margin:0 auto 18px auto; max-width:620px; text-align:left;">
+                <h3 style="text-align:center; margin-bottom:12px;">Energy Upgrades</h3>
 
-                <div style="max-height:320px; overflow-y:auto; border:1px solid #ccc; padding:12px;">
-                    @foreach (var u in _upgrades)
+                <div style="max-height:260px; overflow-y:auto; border:1px solid #ccc; padding:12px;">
+                    @foreach (var u in energyUpgrades)
                     {
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:14px; border-bottom:1px solid #eee; padding-bottom:12px;">
                             <div>
                                 <div><b>@u.Name</b></div>
                                 <div>Level: @u.CurrentLevel</div>
-                                <div>Cost: @(u.NextCost <= 0 ? "MAX" : u.NextCost)</div>
+                                <div>Cost: @(u.NextCost <= 0 ? "MAX" : $"{u.NextCost} Energy")</div>
+                                <div style="font-size:0.9em; opacity:0.8;">@u.EffectDescription</div>
+                            </div>
+
+                            <button disabled="@(!u.CanAfford || _isBusy)"
+                                    @onclick="() => Buy(u.Key)">
+                                Buy
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div style="margin:0 auto; max-width:620px; text-align:left;">
+                <h3 style="text-align:center; margin-bottom:12px;">Stellar Energy Upgrades</h3>
+
+                <div style="max-height:220px; overflow-y:auto; border:1px solid #d6c36a; padding:12px;">
+                    @foreach (var u in stellarUpgrades)
+                    {
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:14px; border-bottom:1px solid #eee; padding-bottom:12px;">
+                            <div>
+                                <div><b>@u.Name</b></div>
+                                <div>Level: @u.CurrentLevel</div>
+                                <div>Cost: @(u.NextCost <= 0 ? "MAX" : $"{u.NextCost} Stellar Energy")</div>
                                 <div style="font-size:0.9em; opacity:0.8;">@u.EffectDescription</div>
                             </div>
 
@@ -313,9 +339,17 @@ else
 
         try
         {
+            var previousStellarEnergy = _player.StellarEnergy;
+
             var updatedPlayer = await Api.SpawnCoreAsync();
             UpdatePlayer(updatedPlayer);
             await LoadUpgrades();
+
+            var stellarGained = updatedPlayer.StellarEnergy - previousStellarEnergy;
+            if (stellarGained > 0)
+            {
+                MessageService.Add($"+{stellarGained} Stellar Energy from spawn!", "success");
+            }
         }
         catch (Exception ex)
         {

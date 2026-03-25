@@ -10,6 +10,9 @@ public sealed class Stats
     public const int MaxOfflineProductionLevel = 40;
     public const int MaxMoreStellarEnergyLevel = 175;
 
+    public const int MaxFasterLevelUpLevel = 20;
+    public const int MaxStellarMoreStellarEnergyLevel = 20;
+
     // EF Core
     public Stats() { }
 
@@ -31,6 +34,10 @@ public sealed class Stats
     public int BetterCores2Level { get; private set; } = 0;
     public int OfflineProductionLevel { get; private set; } = 0;
     public int MoreStellarEnergyLevel { get; private set; } = 0;
+
+    // Stellar Energy upgrades
+    public int FasterLevelUpLevel { get; private set; } = 0;
+    public int StellarMoreStellarEnergyLevel { get; private set; } = 0;
 
     // Offline progress
     public int OfflineCapLevel { get; private set; } = 0;
@@ -88,6 +95,24 @@ public sealed class Stats
             return false;
 
         MoreStellarEnergyLevel++;
+        return true;
+    }
+
+    public bool TryUpgradeFasterLevelUp()
+    {
+        if (FasterLevelUpLevel >= MaxFasterLevelUpLevel)
+            return false;
+
+        FasterLevelUpLevel++;
+        return true;
+    }
+
+    public bool TryUpgradeStellarMoreStellarEnergy()
+    {
+        if (StellarMoreStellarEnergyLevel >= MaxStellarMoreStellarEnergyLevel)
+            return false;
+
+        StellarMoreStellarEnergyLevel++;
         return true;
     }
 

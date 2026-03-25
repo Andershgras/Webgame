@@ -12,6 +12,9 @@ public sealed class Player : Entity<PlayerId>
     private const double BaseStellarEnergyMergeChance = 0.01;
     private const double MoreStellarEnergyChancePerLevel = 0.001;
 
+    private const double StellarSpawnStellarEnergyChancePerLevel = 0.02;
+    private const double FasterLevelUpXpBonusPerLevel = 0.10;
+
     private Player() : base() { } // EF Core
 
     public string Name { get; private set; }
@@ -193,6 +196,42 @@ public sealed class Player : Entity<PlayerId>
         return Stats.TryUpgradeMoreStellarEnergy();
     }
 
+    public long GetFasterLevelUpUpgradeCost()
+    {
+        return 1L + Stats.FasterLevelUpLevel;
+    }
+
+    public bool TryUpgradeFasterLevelUp(out long cost)
+    {
+        cost = GetFasterLevelUpUpgradeCost();
+
+        if (Stats.FasterLevelUpLevel >= Stats.MaxFasterLevelUpLevel)
+            return false;
+
+        if (!Stats.TrySpendStellarEnergy(cost))
+            return false;
+
+        return Stats.TryUpgradeFasterLevelUp();
+    }
+
+    public long GetStellarMoreStellarEnergyUpgradeCost()
+    {
+        return 1L + Stats.StellarMoreStellarEnergyLevel;
+    }
+
+    public bool TryUpgradeStellarMoreStellarEnergy(out long cost)
+    {
+        cost = GetStellarMoreStellarEnergyUpgradeCost();
+
+        if (Stats.StellarMoreStellarEnergyLevel >= Stats.MaxStellarMoreStellarEnergyLevel)
+            return false;
+
+        if (!Stats.TrySpendStellarEnergy(cost))
+            return false;
+
+        return Stats.TryUpgradeStellarMoreStellarEnergy();
+    }
+
     public double GetSpawnIntervalSeconds()
     {
         var interval = BaseSpawnIntervalSeconds - (Stats.FasterCoresLevel * FasterCoresReductionPerLevel);
@@ -219,6 +258,16 @@ public sealed class Player : Entity<PlayerId>
         return BaseStellarEnergyMergeChance + (Stats.MoreStellarEnergyLevel * MoreStellarEnergyChancePerLevel);
     }
 
+    public double GetStellarEnergySpawnChance()
+    {
+        return Stats.StellarMoreStellarEnergyLevel * StellarSpawnStellarEnergyChancePerLevel;
+    }
+
+    public double GetMergeXpMultiplier()
+    {
+        return 1d + (Stats.FasterLevelUpLevel * FasterLevelUpXpBonusPerLevel);
+    }
+
     private int GetNextSpawnTier()
     {
         var tier = GetBaseSpawnTier();
@@ -234,14 +283,31 @@ public sealed class Player : Entity<PlayerId>
         return Random.Shared.NextDouble() < GetStellarEnergyMergeChance() ? 1L : 0L;
     }
 
+    private long RollStellarEnergyRewardOnSpawn()
+    {
+        return Random.Shared.NextDouble() < GetStellarEnergySpawnChance() ? 1L : 0L;
+    }
+
     // -------------------------
     // CORE SYSTEM
     // -------------------------
 
-    public bool TrySpawnCore()
+    public bool TrySpawnCore(out long stellarEnergyGained)
     {
+        stellarEnergyGained = 0;
+
         var nextTier = GetNextSpawnTier();
-        return Board.TrySpawnCore(nextTier, out _);
+        var success = Board.TrySpawnCore(nextTier, out _);
+        if (!success)
+            return false;
+
+        stellarEnergyGained = RollStellarEnergyRewardOnSpawn();
+        if (stellarEnergyGained > 0)
+        {
+            Stats.AddStellarEnergy(stellarEnergyGained);
+        }
+
+        return true;
     }
 
     public bool TryMergeCores(Guid firstCoreId, Guid secondCoreId, out long xpGained, out long stellarEnergyGained)
@@ -252,7 +318,8 @@ public sealed class Player : Entity<PlayerId>
         if (!Board.TryMerge(firstCoreId, secondCoreId, out var merged) || merged is null)
             return false;
 
-        xpGained = merged.Tier;
+        var baseXp = merged.Tier;
+        xpGained = (long)Math.Max(1, Math.Floor(baseXp * GetMergeXpMultiplier()));
         stellarEnergyGained = RollStellarEnergyRewardOnMerge();
 
         Stats.RegisterMerge(xpGained, stellarEnergyGained, 0);

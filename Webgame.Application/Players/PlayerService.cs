@@ -95,7 +95,7 @@ public sealed class PlayerService
         if (player is null)
             return Result<Player>.Fail(Errors.PlayerNotFound);
 
-        var success = player.TrySpawnCore();
+        var success = player.TrySpawnCore(out _);
         if (!success)
             return Result<Player>.Fail(Errors.BoardIsFull);
 
@@ -179,6 +179,16 @@ public sealed class PlayerService
             case "more_stellar_energy":
                 success = player.TryUpgradeMoreStellarEnergy(out cost);
                 newLevel = player.Stats.MoreStellarEnergyLevel;
+                break;
+
+            case "faster_level_up":
+                success = player.TryUpgradeFasterLevelUp(out cost);
+                newLevel = player.Stats.FasterLevelUpLevel;
+                break;
+
+            case "stellar_more_stellar_energy":
+                success = player.TryUpgradeStellarMoreStellarEnergy(out cost);
+                newLevel = player.Stats.StellarMoreStellarEnergyLevel;
                 break;
 
             default:
