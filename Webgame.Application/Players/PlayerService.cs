@@ -74,21 +74,6 @@ public sealed class PlayerService
         return Result<Player>.Ok(player);
     }
 
-    public async Task<Result<Player>> ClickAsync(PlayerId id, CancellationToken ct)
-    {
-        var player = await _repo.GetByIdAsync(id, ct);
-        if (player is null)
-            return Result<Player>.Fail(Errors.PlayerNotFound);
-
-        player.Click();
-        player.Touch();
-
-        _repo.Update(player);
-        await _uow.SaveChangesAsync(ct);
-
-        return Result<Player>.Ok(player);
-    }
-
     public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
@@ -166,16 +151,6 @@ public sealed class PlayerService
 
         switch (key)
         {
-            case "click_power":
-                success = player.TryUpgradeClickPower(out cost);
-                newLevel = player.Stats.ClickPowerLevel;
-                break;
-
-            case "auto_clicker":
-                success = player.TryUpgradeAutoClicker(out cost);
-                newLevel = player.Stats.AutoClickerLevel;
-                break;
-
             case "offline_cap":
                 success = player.TryUpgradeOfflineCap(out cost);
                 newLevel = player.Stats.OfflineCapLevel;

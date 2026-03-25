@@ -26,7 +26,6 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
                 p.Id.Value,
                 p.Name,
                 p.Stats.Level,
-                p.Stats.TotalClicks,
                 p.Stats.TotalEnergyEarned,
                 p.Stats.TotalEnergySpent,
                 p.Stats.TotalMerges))
@@ -51,7 +50,6 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
                 p.Id.Value,
                 p.Name,
                 p.Stats.Level,
-                p.Stats.TotalClicks,
                 p.Stats.TotalEnergyEarned,
                 p.Stats.TotalEnergySpent,
                 p.Stats.TotalMerges))
@@ -70,26 +68,16 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
     {
         return type switch
         {
-            LeaderboardType.TotalClicks => players
-                .OrderByDescending(p => p.TotalClicks)
-                .ThenByDescending(p => p.TotalEnergyEarned)
-                .ThenByDescending(p => p.TotalEnergySpent)
-                .ThenByDescending(p => p.TotalMerges)
-                .ThenByDescending(p => p.Level)
-                .ThenBy(p => p.PlayerId),
-
-            LeaderboardType.TotalCoinsEarned or LeaderboardType.TotalEnergyEarned => players
+            LeaderboardType.TotalEnergyEarned => players
                 .OrderByDescending(p => p.TotalEnergyEarned)
-                .ThenByDescending(p => p.TotalClicks)
-                .ThenByDescending(p => p.TotalEnergySpent)
                 .ThenByDescending(p => p.TotalMerges)
                 .ThenByDescending(p => p.Level)
+                .ThenByDescending(p => p.TotalEnergySpent)
                 .ThenBy(p => p.PlayerId),
 
-            LeaderboardType.TotalCoinsSpent or LeaderboardType.TotalEnergySpent => players
+            LeaderboardType.TotalEnergySpent => players
                 .OrderByDescending(p => p.TotalEnergySpent)
                 .ThenByDescending(p => p.TotalEnergyEarned)
-                .ThenByDescending(p => p.TotalClicks)
                 .ThenByDescending(p => p.TotalMerges)
                 .ThenByDescending(p => p.Level)
                 .ThenBy(p => p.PlayerId),
@@ -98,22 +86,21 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
                 .OrderByDescending(p => p.TotalMerges)
                 .ThenByDescending(p => p.TotalEnergyEarned)
                 .ThenByDescending(p => p.Level)
-                .ThenByDescending(p => p.TotalClicks)
+                .ThenByDescending(p => p.TotalEnergySpent)
                 .ThenBy(p => p.PlayerId),
 
             LeaderboardType.Level => players
                 .OrderByDescending(p => p.Level)
                 .ThenByDescending(p => p.TotalEnergyEarned)
                 .ThenByDescending(p => p.TotalMerges)
-                .ThenByDescending(p => p.TotalClicks)
+                .ThenByDescending(p => p.TotalEnergySpent)
                 .ThenBy(p => p.PlayerId),
 
             _ => players
-                .OrderByDescending(p => p.TotalClicks)
-                .ThenByDescending(p => p.TotalEnergyEarned)
-                .ThenByDescending(p => p.TotalEnergySpent)
+                .OrderByDescending(p => p.TotalEnergyEarned)
                 .ThenByDescending(p => p.TotalMerges)
                 .ThenByDescending(p => p.Level)
+                .ThenByDescending(p => p.TotalEnergySpent)
                 .ThenBy(p => p.PlayerId)
         };
     }
@@ -122,14 +109,11 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
     {
         return type switch
         {
-            LeaderboardType.TotalClicks => row.TotalClicks,
-            LeaderboardType.TotalCoinsEarned => row.TotalEnergyEarned,
-            LeaderboardType.TotalCoinsSpent => row.TotalEnergySpent,
             LeaderboardType.TotalEnergyEarned => row.TotalEnergyEarned,
             LeaderboardType.TotalEnergySpent => row.TotalEnergySpent,
             LeaderboardType.TotalMerges => row.TotalMerges,
             LeaderboardType.Level => row.Level,
-            _ => row.TotalClicks
+            _ => row.TotalEnergyEarned
         };
     }
 
@@ -137,7 +121,6 @@ public sealed class EfLeaderboardQuery : ILeaderboardQuery
         Guid PlayerId,
         string Name,
         int Level,
-        long TotalClicks,
         long TotalEnergyEarned,
         long TotalEnergySpent,
         long TotalMerges);

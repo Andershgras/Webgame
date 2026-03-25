@@ -34,17 +34,10 @@ public static class PlayerMappings
             p.Board.SlotCount,
             cores,
 
-            // Temporary legacy fields
-            p.Stats.ClickPower,
-            p.Stats.ClickPowerLevel,
-            p.Stats.AutoClickerLevel,
-            p.Stats.ClicksPerSecond,
-
             p.Stats.OfflineCapSeconds,
             offline.EnergyEarned,
             offline.SecondsApplied,
 
-            p.Stats.TotalClicks,
             p.Stats.TotalEnergyEarned,
             p.Stats.TotalEnergySpent,
             p.Stats.TotalMerges

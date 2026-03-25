@@ -62,10 +62,6 @@ else
                 <b>Production / sec:</b> @GetTotalBoardProduction()
             </p>
 
-            <p><b>Board slots:</b> @_player.BoardSlotCount</p>
-            <p><b>Core count:</b> @_player.Cores.Count</p>
-            <p><b>Board full:</b> @IsBoardFull()</p>
-            <p><b>Busy:</b> @_isBusy</p>
             @{
                 var elapsed = (DateTime.UtcNow - _lastSpawnTime).TotalSeconds;
                 var seconds = Math.Min(SpawnIntervalSeconds, elapsed);
@@ -74,6 +70,7 @@ else
             <div style="margin-bottom:20px;">
                 <b>Auto spawn:</b> @Math.Round(seconds, 1)s / @SpawnIntervalSeconds s
             </div>
+
             <div style="margin-bottom:20px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
                 <button @onclick="SpawnCore"
                         disabled="@_isBusy"
@@ -175,8 +172,8 @@ else
 
     private string? _error;
     private string? _traceId;
-    // AUTO SPAWN
-	private DateTime _lastSpawnTime = DateTime.UtcNow;
+
+    private DateTime _lastSpawnTime = DateTime.UtcNow;
     private const double SpawnIntervalSeconds = 5;
     private CancellationTokenSource? _spawnCts;
     private Task? _spawnTask;
@@ -523,9 +520,9 @@ else
         _autoTickCts = new CancellationTokenSource();
         _autoTickTask = RunAutoTickAsync(_autoTickCts.Token);
 
-        // NEW
         EnsureAutoSpawnRunning();
     }
+
     private async Task RunAutoTickAsync(CancellationToken ct)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
@@ -548,6 +545,7 @@ else
         {
         }
     }
+
     private void EnsureAutoSpawnRunning()
     {
         if (_player is null)
@@ -559,6 +557,7 @@ else
         _spawnCts = new CancellationTokenSource();
         _spawnTask = RunAutoSpawnAsync(_spawnCts.Token);
     }
+
     private async Task RunAutoSpawnAsync(CancellationToken ct)
     {
         try
@@ -601,17 +600,19 @@ else
     private void StopAutoTick()
     {
         if (_autoTickCts is not null)
-        _autoTickCts.Cancel();
-        _autoTickCts.Dispose();
-        _autoTickCts = null;
-        _autoTickTask = null;
+        {
+            _autoTickCts.Cancel();
+            _autoTickCts.Dispose();
+            _autoTickCts = null;
+            _autoTickTask = null;
+        }
 
         if (_spawnCts is not null)
         {
-        _spawnCts.Cancel();
-        _spawnCts.Dispose();
-        _spawnCts = null;
-		_spawnTask = null;
+            _spawnCts.Cancel();
+            _spawnCts.Dispose();
+            _spawnCts = null;
+            _spawnTask = null;
         }
     }
 

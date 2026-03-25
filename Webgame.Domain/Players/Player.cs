@@ -55,14 +55,6 @@ public sealed class Player : Entity<PlayerId>
         return passwordHash;
     }
 
-    public void Click()
-    {
-        Stats.RegisterClick();
-
-        var energyGained = Stats.ClickPower;
-        Stats.AddEnergy(energyGained);
-    }
-
     public static bool TryCreate(string name, string passwordHash, out Player? player)
     {
         name = (name ?? "").Trim();
@@ -81,41 +73,10 @@ public sealed class Player : Entity<PlayerId>
     public bool TryRename(string newName)
     {
         newName = (newName ?? "").Trim();
-        if (newName.Length is < 3 or > 20) return false;
+        if (newName.Length is < 3 or > 20)
+            return false;
 
         Name = newName;
-        return true;
-    }
-
-    public long GetClickPowerUpgradeCost()
-    {
-        return 10L * Stats.ClickPowerLevel;
-    }
-
-    public bool TryUpgradeClickPower(out long cost)
-    {
-        cost = GetClickPowerUpgradeCost();
-
-        if (!Stats.TrySpendEnergy(cost))
-            return false;
-
-        Stats.UpgradeClickPower();
-        return true;
-    }
-
-    public long GetAutoClickerUpgradeCost()
-    {
-        return 100L * (Stats.AutoClickerLevel + 1);
-    }
-
-    public bool TryUpgradeAutoClicker(out long cost)
-    {
-        cost = GetAutoClickerUpgradeCost();
-
-        if (!Stats.TrySpendEnergy(cost))
-            return false;
-
-        Stats.UpgradeAutoClicker();
         return true;
     }
 
@@ -153,7 +114,6 @@ public sealed class Player : Entity<PlayerId>
 
         xpGained = merged.Tier;
 
-        // XP is awarded only on merge
         Stats.RegisterMerge(xpGained, 0);
         return true;
     }

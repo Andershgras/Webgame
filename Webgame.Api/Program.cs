@@ -122,7 +122,8 @@ namespace Webgame.Api
 
             // Persistence
             builder.Services.AddDbContext<WebgameDbContext>(options =>
-                options.UseSqlServer(connectionString));
+                options.UseSqlServer(connectionString, sqlOptions =>
+                    sqlOptions.EnableRetryOnFailure()));
 
             // Common
             builder.Services.AddProblemDetails();

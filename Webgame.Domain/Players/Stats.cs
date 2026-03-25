@@ -19,24 +19,11 @@ public sealed class Stats
     public long StellarEnergy { get; private set; } = 0;
     public long StormEnergy { get; private set; } = 0;
 
-    // Legacy compatibility
-    public long Coins => Energy;
-
-    // Temporary legacy clicker upgrades
-    public int ClickPower { get; private set; } = 1;
-    public int ClickPowerLevel { get; private set; } = 1;
-    public int AutoClickerLevel { get; private set; } = 0;
-
     // Offline progress
     public int OfflineCapLevel { get; private set; } = 0;
     public int OfflineCapSeconds => 3600 + (OfflineCapLevel * 1800);
 
-    // Legacy helpers
-    public int AutoCoinsPerTick => AutoClickerLevel;
-    public int ClicksPerSecond => AutoClickerLevel;
-
     // Lifetime
-    public long TotalClicks { get; private set; }
     public long TotalEnergyEarned { get; private set; }
     public long TotalEnergySpent { get; private set; }
     public long TotalMerges { get; private set; }
@@ -44,22 +31,6 @@ public sealed class Stats
     public void UpgradeOfflineCap()
     {
         OfflineCapLevel++;
-    }
-
-    public void UpgradeAutoClicker()
-    {
-        AutoClickerLevel++;
-    }
-
-    public void UpgradeClickPower()
-    {
-        ClickPowerLevel++;
-        ClickPower++;
-    }
-
-    public void RegisterClick()
-    {
-        TotalClicks++;
     }
 
     public void RegisterMerge(long xpGained, long stormEnergyReward = 0)
@@ -125,10 +96,6 @@ public sealed class Stats
         StormEnergy -= amount;
         return true;
     }
-
-    // Compatibility wrappers so existing code can still work while we migrate
-    public void AddCoins(long amount) => AddEnergy(amount);
-    public bool TrySpendCoins(long amount) => TrySpendEnergy(amount);
 
     public void AddExperience(long amount)
     {

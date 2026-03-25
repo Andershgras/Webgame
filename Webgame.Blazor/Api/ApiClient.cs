@@ -32,12 +32,6 @@ public sealed class ApiClient
         return await ReadOrThrowAsync<PlayerResponse>(res);
     }
 
-    public async Task<PlayerResponse> ClickAsync()
-    {
-        var res = await _http.PostAsync("api/players/me/click", null);
-        return await ReadOrThrowAsync<PlayerResponse>(res);
-    }
-
     public async Task<PlayerResponse> TickAsync()
     {
         var res = await _http.PostAsync("api/players/me/tick", null);
@@ -82,7 +76,7 @@ public sealed class ApiClient
 
     public async Task<IReadOnlyList<LeaderboardEntry>> GetLeaderboardAsync(
         int top = 10,
-        LeaderboardType type = LeaderboardType.TotalClicks)
+        LeaderboardType type = LeaderboardType.TotalEnergyEarned)
     {
         var res = await _http.GetAsync(
             $"api/leaderboard?top={top}&type={Uri.EscapeDataString(type.ToString())}");
@@ -92,7 +86,7 @@ public sealed class ApiClient
 
     public async Task<int> GetLeaderboardRankAsync(
         Guid playerId,
-        LeaderboardType type = LeaderboardType.TotalClicks)
+        LeaderboardType type = LeaderboardType.TotalEnergyEarned)
     {
         var res = await _http.GetAsync(
             $"api/leaderboard/rank?playerId={playerId}&type={Uri.EscapeDataString(type.ToString())}");

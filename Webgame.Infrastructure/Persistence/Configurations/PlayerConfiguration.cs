@@ -56,25 +56,8 @@ public sealed class PlayerConfiguration : IEntityTypeConfiguration<Player>
                 .HasColumnName("StormEnergy")
                 .IsRequired();
 
-            // Temporary legacy fields
-            stats.Property(s => s.ClickPower)
-                .HasColumnName("ClickPower")
-                .IsRequired();
-
-            stats.Property(s => s.ClickPowerLevel)
-                .HasColumnName("ClickPowerLevel")
-                .IsRequired();
-
-            stats.Property(s => s.AutoClickerLevel)
-                .HasColumnName("AutoClickerLevel")
-                .IsRequired();
-
             stats.Property(s => s.OfflineCapLevel)
                 .HasColumnName("OfflineCapLevel")
-                .IsRequired();
-
-            stats.Property(s => s.TotalClicks)
-                .HasColumnName("TotalClicks")
                 .IsRequired();
 
             stats.Property(s => s.TotalEnergyEarned)
@@ -89,9 +72,6 @@ public sealed class PlayerConfiguration : IEntityTypeConfiguration<Player>
                 .HasColumnName("TotalMerges")
                 .IsRequired();
 
-            stats.Ignore(s => s.Coins);
-            stats.Ignore(s => s.AutoCoinsPerTick);
-            stats.Ignore(s => s.ClicksPerSecond);
             stats.Ignore(s => s.OfflineCapSeconds);
         });
 

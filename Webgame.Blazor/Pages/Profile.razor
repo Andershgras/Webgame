@@ -23,6 +23,8 @@ else
 {
     <p><b>Name:</b> @_player.Name</p>
     <p><b>Level:</b> @_player.Level</p>
+
+    <h4>Energy</h4>
     <p><b>Energy:</b> @_player.Energy</p>
     <p><b>Stellar Energy:</b> @_player.StellarEnergy</p>
     <p><b>Storm Energy:</b> @_player.StormEnergy</p>
@@ -49,13 +51,10 @@ else
         <p>No cores yet.</p>
     }
 
-    <h4>Current Progression</h4>
-    <p><b>Click Power:</b> @_player.ClickPower</p>
-    <p><b>Legacy Production / Second:</b> @_player.ClicksPerSecond</p>
+    <h4>Progression</h4>
     <p><b>Offline Cap:</b> @(_player.OfflineCapSeconds / 60) min</p>
 
     <h4>Lifetime Stats</h4>
-    <p><b>Total Clicks:</b> @_player.TotalClicks</p>
     <p><b>Total Energy Earned:</b> @_player.TotalEnergyEarned</p>
     <p><b>Total Energy Spent:</b> @_player.TotalEnergySpent</p>
     <p><b>Total Merges:</b> @_player.TotalMerges</p>

@@ -28,10 +28,6 @@ public sealed class PlayersController : ControllerBase
     public sealed record LoginRequest(string Name, string Password);
     public sealed record MergeCoresRequest(Guid FirstCoreId, Guid SecondCoreId);
 
-    // -------------------------
-    // PUBLIC
-    // -------------------------
-
     [AllowAnonymous]
     [HttpPost]
     public async Task<ActionResult<PlayerResponse>> Create(
@@ -71,10 +67,6 @@ public sealed class PlayersController : ControllerBase
         return Ok(new LoginResponse(token, expiresAtUtc, playerDto));
     }
 
-    // -------------------------
-    // PROTECTED (/me)
-    // -------------------------
-
     [HttpGet("me")]
     public async Task<ActionResult<PlayerResponse>> GetMe(CancellationToken ct)
     {
@@ -83,22 +75,6 @@ public sealed class PlayersController : ControllerBase
             return Unauthorized();
 
         var result = await _service.GetPlayerAsync(playerId.Value, ct);
-
-        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
-            this,
-            result,
-            PlayerMappings.ToResponse,
-            dto => Ok(dto));
-    }
-
-    [HttpPost("me/click")]
-    public async Task<ActionResult<PlayerResponse>> Click(CancellationToken ct)
-    {
-        var playerId = GetPlayerIdFromToken();
-        if (playerId is null)
-            return Unauthorized();
-
-        var result = await _service.ClickAsync(playerId.Value, ct);
 
         return ResultToHttp.ToActionResult<Player, PlayerResponse>(
             this,
@@ -172,10 +148,6 @@ public sealed class PlayersController : ControllerBase
 
         return ResultToHttp.ToActionResult(this, result, () => NoContent());
     }
-
-    // -------------------------
-    // HELPER
-    // -------------------------
 
     private PlayerId? GetPlayerIdFromToken()
     {

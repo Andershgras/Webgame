@@ -99,19 +99,14 @@ else
     private string? _error;
     private string? _traceId;
 
-    private LeaderboardType _selectedType = LeaderboardType.TotalClicks;
+    private LeaderboardType _selectedType = LeaderboardType.TotalEnergyEarned;
 
     private readonly List<LeaderboardOption> _options =
     [
-        new(LeaderboardType.TotalClicks, "Most Total Clicks"),
         new(LeaderboardType.TotalEnergyEarned, "Most Total Energy Earned"),
         new(LeaderboardType.TotalEnergySpent, "Most Total Energy Spent"),
         new(LeaderboardType.TotalMerges, "Most Total Merges"),
-        new(LeaderboardType.Level, "Highest Level"),
-
-        // Legacy options kept for compatibility if needed
-        new(LeaderboardType.TotalCoinsEarned, "Most Total Energy Earned (Legacy)"),
-        new(LeaderboardType.TotalCoinsSpent, "Most Total Energy Spent (Legacy)")
+        new(LeaderboardType.Level, "Highest Level")
     ];
 
     protected override async Task OnInitializedAsync()
@@ -187,7 +182,7 @@ else
         }
         else
         {
-            _selectedType = LeaderboardType.TotalClicks;
+            _selectedType = LeaderboardType.TotalEnergyEarned;
         }
 
         await Load();
@@ -195,9 +190,6 @@ else
 
     private static string GetLeaderboardLabel(LeaderboardType type) => type switch
     {
-        LeaderboardType.TotalClicks => "Most Total Clicks",
-        LeaderboardType.TotalCoinsEarned => "Most Total Energy Earned",
-        LeaderboardType.TotalCoinsSpent => "Most Total Energy Spent",
         LeaderboardType.TotalEnergyEarned => "Most Total Energy Earned",
         LeaderboardType.TotalEnergySpent => "Most Total Energy Spent",
         LeaderboardType.TotalMerges => "Most Total Merges",
@@ -207,9 +199,6 @@ else
 
     private static string GetValueColumnHeader(LeaderboardType type) => type switch
     {
-        LeaderboardType.TotalClicks => "Total Clicks",
-        LeaderboardType.TotalCoinsEarned => "Total Energy Earned",
-        LeaderboardType.TotalCoinsSpent => "Total Energy Spent",
         LeaderboardType.TotalEnergyEarned => "Total Energy Earned",
         LeaderboardType.TotalEnergySpent => "Total Energy Spent",
         LeaderboardType.TotalMerges => "Total Merges",
