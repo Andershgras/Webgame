@@ -337,11 +337,19 @@ else
 
         try
         {
+            var previousStellarEnergy = _player.StellarEnergy;
+
             var ids = _selectedCoreIds.ToList();
             var updatedPlayer = await Api.MergeCoresAsync(ids[0], ids[1]);
             _selectedCoreIds.Clear();
             UpdatePlayer(updatedPlayer);
             await LoadUpgrades();
+
+            var stellarGained = updatedPlayer.StellarEnergy - previousStellarEnergy;
+            if (stellarGained > 0)
+            {
+                MessageService.Add($"+{stellarGained} Stellar Energy from merge!", "success");
+            }
         }
         catch (Exception ex)
         {

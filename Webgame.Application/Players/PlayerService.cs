@@ -113,7 +113,7 @@ public sealed class PlayerService
         if (player is null)
             return Result<Player>.Fail(Errors.PlayerNotFound);
 
-        var success = player.TryMergeCores(firstCoreId, secondCoreId, out _);
+        var success = player.TryMergeCores(firstCoreId, secondCoreId, out _, out _);
         if (!success)
             return Result<Player>.Fail(Errors.InvalidMerge);
 
@@ -174,6 +174,11 @@ public sealed class PlayerService
             case "offline_production":
                 success = player.TryUpgradeOfflineProduction(out cost);
                 newLevel = player.Stats.OfflineProductionLevel;
+                break;
+
+            case "more_stellar_energy":
+                success = player.TryUpgradeMoreStellarEnergy(out cost);
+                newLevel = player.Stats.MoreStellarEnergyLevel;
                 break;
 
             default:

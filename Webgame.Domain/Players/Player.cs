@@ -9,6 +9,9 @@ public sealed class Player : Entity<PlayerId>
     private const double FasterCoresReductionPerLevel = 0.1;
     private const double MinSpawnIntervalSeconds = 1.0;
 
+    private const double BaseStellarEnergyMergeChance = 0.01;
+    private const double MoreStellarEnergyChancePerLevel = 0.001;
+
     private Player() : base() { } // EF Core
 
     public string Name { get; private set; }
@@ -172,6 +175,24 @@ public sealed class Player : Entity<PlayerId>
         return Stats.TryUpgradeOfflineProduction();
     }
 
+    public long GetMoreStellarEnergyUpgradeCost()
+    {
+        return 200L * (Stats.MoreStellarEnergyLevel + 1);
+    }
+
+    public bool TryUpgradeMoreStellarEnergy(out long cost)
+    {
+        cost = GetMoreStellarEnergyUpgradeCost();
+
+        if (Stats.MoreStellarEnergyLevel >= Stats.MaxMoreStellarEnergyLevel)
+            return false;
+
+        if (!Stats.TrySpendEnergy(cost))
+            return false;
+
+        return Stats.TryUpgradeMoreStellarEnergy();
+    }
+
     public double GetSpawnIntervalSeconds()
     {
         var interval = BaseSpawnIntervalSeconds - (Stats.FasterCoresLevel * FasterCoresReductionPerLevel);
@@ -193,6 +214,11 @@ public sealed class Player : Entity<PlayerId>
         return 1d + (Stats.OfflineProductionLevel / 100d);
     }
 
+    public double GetStellarEnergyMergeChance()
+    {
+        return BaseStellarEnergyMergeChance + (Stats.MoreStellarEnergyLevel * MoreStellarEnergyChancePerLevel);
+    }
+
     private int GetNextSpawnTier()
     {
         var tier = GetBaseSpawnTier();
@@ -201,6 +227,11 @@ public sealed class Player : Entity<PlayerId>
             tier++;
 
         return tier;
+    }
+
+    private long RollStellarEnergyRewardOnMerge()
+    {
+        return Random.Shared.NextDouble() < GetStellarEnergyMergeChance() ? 1L : 0L;
     }
 
     // -------------------------
@@ -213,16 +244,18 @@ public sealed class Player : Entity<PlayerId>
         return Board.TrySpawnCore(nextTier, out _);
     }
 
-    public bool TryMergeCores(Guid firstCoreId, Guid secondCoreId, out long xpGained)
+    public bool TryMergeCores(Guid firstCoreId, Guid secondCoreId, out long xpGained, out long stellarEnergyGained)
     {
         xpGained = 0;
+        stellarEnergyGained = 0;
 
         if (!Board.TryMerge(firstCoreId, secondCoreId, out var merged) || merged is null)
             return false;
 
         xpGained = merged.Tier;
+        stellarEnergyGained = RollStellarEnergyRewardOnMerge();
 
-        Stats.RegisterMerge(xpGained, 0);
+        Stats.RegisterMerge(xpGained, stellarEnergyGained, 0);
         return true;
     }
 

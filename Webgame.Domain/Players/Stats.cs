@@ -8,6 +8,7 @@ public sealed class Stats
     public const int MaxBetterCoresLevel = 8;
     public const int MaxBetterCores2Level = 75;
     public const int MaxOfflineProductionLevel = 40;
+    public const int MaxMoreStellarEnergyLevel = 175;
 
     // EF Core
     public Stats() { }
@@ -29,6 +30,7 @@ public sealed class Stats
     public int BetterCoresLevel { get; private set; } = 0;
     public int BetterCores2Level { get; private set; } = 0;
     public int OfflineProductionLevel { get; private set; } = 0;
+    public int MoreStellarEnergyLevel { get; private set; } = 0;
 
     // Offline progress
     public int OfflineCapLevel { get; private set; } = 0;
@@ -80,12 +82,24 @@ public sealed class Stats
         return true;
     }
 
-    public void RegisterMerge(long xpGained, long stormEnergyReward = 0)
+    public bool TryUpgradeMoreStellarEnergy()
+    {
+        if (MoreStellarEnergyLevel >= MaxMoreStellarEnergyLevel)
+            return false;
+
+        MoreStellarEnergyLevel++;
+        return true;
+    }
+
+    public void RegisterMerge(long xpGained, long stellarEnergyReward = 0, long stormEnergyReward = 0)
     {
         TotalMerges++;
 
         if (xpGained > 0)
             AddExperience(xpGained);
+
+        if (stellarEnergyReward > 0)
+            AddStellarEnergy(stellarEnergyReward);
 
         if (stormEnergyReward > 0)
             AddStormEnergy(stormEnergyReward);

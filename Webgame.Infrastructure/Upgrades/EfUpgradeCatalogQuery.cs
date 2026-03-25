@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Webgame.Application.Common;
 using Webgame.Application.Upgrades;
+using Webgame.Contracts.Upgrades;
 using Webgame.Domain.Players;
 using Webgame.Infrastructure.Persistence;
-using Webgame.Contracts.Upgrades;
 
 namespace Webgame.Infrastructure.Upgrades;
 
@@ -31,12 +31,14 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
         var betterCoresMaxed = player.Stats.BetterCoresLevel >= Stats.MaxBetterCoresLevel;
         var betterCores2Maxed = player.Stats.BetterCores2Level >= Stats.MaxBetterCores2Level;
         var offlineProductionMaxed = player.Stats.OfflineProductionLevel >= Stats.MaxOfflineProductionLevel;
+        var moreStellarEnergyMaxed = player.Stats.MoreStellarEnergyLevel >= Stats.MaxMoreStellarEnergyLevel;
 
         var offlineCapCost = player.GetOfflineCapUpgradeCost();
         var fasterCoresCost = player.GetFasterCoresUpgradeCost();
         var betterCoresCost = player.GetBetterCoresUpgradeCost();
         var betterCores2Cost = player.GetBetterCores2UpgradeCost();
         var offlineProductionCost = player.GetOfflineProductionUpgradeCost();
+        var moreStellarEnergyCost = player.GetMoreStellarEnergyUpgradeCost();
 
         IReadOnlyList<UpgradeCatalogEntry> list = new List<UpgradeCatalogEntry>
         {
@@ -82,6 +84,17 @@ public sealed class EfUpgradeCatalogQuery : IUpgradeCatalogQuery
                     ? $"MAX - offline production is +{player.Stats.OfflineProductionLevel}%"
                     : $"+1% offline production (now +{player.Stats.OfflineProductionLevel}% / max {Stats.MaxOfflineProductionLevel}%)",
                 CanAfford: !offlineProductionMaxed && player.Stats.Energy >= offlineProductionCost
+            ),
+
+            new(
+                Key: "more_stellar_energy",
+                Name: "More Stellar Energy",
+                CurrentLevel: player.Stats.MoreStellarEnergyLevel,
+                NextCost: moreStellarEnergyMaxed ? 0 : moreStellarEnergyCost,
+                EffectDescription: moreStellarEnergyMaxed
+                    ? $"MAX - {player.GetStellarEnergyMergeChance() * 100:0.0}% merge chance"
+                    : $"+0.1% Stellar Energy chance on merge (now {player.GetStellarEnergyMergeChance() * 100:0.0}% / max {Stats.MaxMoreStellarEnergyLevel})",
+                CanAfford: !moreStellarEnergyMaxed && player.Stats.Energy >= moreStellarEnergyCost
             ),
 
             new(
