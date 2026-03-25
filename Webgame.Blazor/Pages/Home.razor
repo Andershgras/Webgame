@@ -58,17 +58,22 @@ else
                 <b>Storm Energy:</b> @_player.StormEnergy
             </p>
 
-            <p style="margin:6px 0 24px 0;">
+            <p style="margin:6px 0;">
                 <b>Production / sec:</b> @GetTotalBoardProduction()
+            </p>
+
+            <p style="margin:6px 0 24px 0;">
+                <b>Spawn interval:</b> @GetSpawnIntervalText()
             </p>
 
             @{
                 var elapsed = (DateTime.UtcNow - _lastSpawnTime).TotalSeconds;
-                var seconds = Math.Min(SpawnIntervalSeconds, elapsed);
+                var interval = GetSpawnIntervalSeconds();
+                var seconds = Math.Min(interval, elapsed);
             }
 
             <div style="margin-bottom:20px;">
-                <b>Auto spawn:</b> @Math.Round(seconds, 1)s / @SpawnIntervalSeconds s
+                <b>Auto spawn:</b> @Math.Round(seconds, 1)s / @GetSpawnIntervalText()
             </div>
 
             <div style="margin-bottom:20px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
@@ -113,17 +118,18 @@ else
                 </div>
             </div>
 
-            <div style="margin:0 auto; max-width:500px; text-align:left;">
+            <div style="margin:0 auto; max-width:620px; text-align:left;">
                 <h3 style="text-align:center; margin-bottom:12px;">Upgrades</h3>
 
-                <div style="max-height:260px; overflow-y:auto; border:1px solid #ccc; padding:12px;">
+                <div style="max-height:320px; overflow-y:auto; border:1px solid #ccc; padding:12px;">
                     @foreach (var u in _upgrades)
                     {
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:14px; border-bottom:1px solid #eee; padding-bottom:12px;">
                             <div>
                                 <div><b>@u.Name</b></div>
                                 <div>Level: @u.CurrentLevel</div>
-                                <div>Cost: @u.NextCost</div>
+                                <div>Cost: @(u.NextCost <= 0 ? "MAX" : u.NextCost)</div>
+                                <div style="font-size:0.9em; opacity:0.8;">@u.EffectDescription</div>
                             </div>
 
                             <button disabled="@(!u.CanAfford || _isBusy)"
@@ -174,7 +180,6 @@ else
     private string? _traceId;
 
     private DateTime _lastSpawnTime = DateTime.UtcNow;
-    private const double SpawnIntervalSeconds = 5;
     private CancellationTokenSource? _spawnCts;
     private Task? _spawnTask;
 
@@ -373,6 +378,16 @@ else
     private long GetTotalBoardProduction()
     {
         return _player?.Cores.Sum(c => c.ProductionPerSecond) ?? 0;
+    }
+
+    private double GetSpawnIntervalSeconds()
+    {
+        return _player?.SpawnIntervalSeconds ?? 5.0;
+    }
+
+    private string GetSpawnIntervalText()
+    {
+        return $"{GetSpawnIntervalSeconds():0.0}s";
     }
 
     private bool IsBoardFull()
@@ -576,8 +591,9 @@ else
                     continue;
                 }
 
+                var interval = GetSpawnIntervalSeconds();
                 var elapsed = (DateTime.UtcNow - _lastSpawnTime).TotalSeconds;
-                var progress = elapsed / SpawnIntervalSeconds;
+                var progress = elapsed / interval;
 
                 if (progress >= 1)
                 {

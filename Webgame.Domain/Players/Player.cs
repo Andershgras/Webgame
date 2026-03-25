@@ -5,6 +5,10 @@ namespace Webgame.Domain.Players;
 
 public sealed class Player : Entity<PlayerId>
 {
+    private const double BaseSpawnIntervalSeconds = 5.0;
+    private const double FasterCoresReductionPerLevel = 0.1;
+    private const double MinSpawnIntervalSeconds = 1.0;
+
     private Player() : base() { } // EF Core
 
     public string Name { get; private set; }
@@ -96,13 +100,117 @@ public sealed class Player : Entity<PlayerId>
         return true;
     }
 
+    public long GetFasterCoresUpgradeCost()
+    {
+        return 25L * (Stats.FasterCoresLevel + 1);
+    }
+
+    public bool TryUpgradeFasterCores(out long cost)
+    {
+        cost = GetFasterCoresUpgradeCost();
+
+        if (Stats.FasterCoresLevel >= Stats.MaxFasterCoresLevel)
+            return false;
+
+        if (!Stats.TrySpendEnergy(cost))
+            return false;
+
+        return Stats.TryUpgradeFasterCores();
+    }
+
+    public long GetBetterCoresUpgradeCost()
+    {
+        return 100L * (Stats.BetterCoresLevel + 1);
+    }
+
+    public bool TryUpgradeBetterCores(out long cost)
+    {
+        cost = GetBetterCoresUpgradeCost();
+
+        if (Stats.BetterCoresLevel >= Stats.MaxBetterCoresLevel)
+            return false;
+
+        if (!Stats.TrySpendEnergy(cost))
+            return false;
+
+        return Stats.TryUpgradeBetterCores();
+    }
+
+    public long GetBetterCores2UpgradeCost()
+    {
+        return 150L * (Stats.BetterCores2Level + 1);
+    }
+
+    public bool TryUpgradeBetterCores2(out long cost)
+    {
+        cost = GetBetterCores2UpgradeCost();
+
+        if (Stats.BetterCores2Level >= Stats.MaxBetterCores2Level)
+            return false;
+
+        if (!Stats.TrySpendEnergy(cost))
+            return false;
+
+        return Stats.TryUpgradeBetterCores2();
+    }
+
+    public long GetOfflineProductionUpgradeCost()
+    {
+        return 75L * (Stats.OfflineProductionLevel + 1);
+    }
+
+    public bool TryUpgradeOfflineProduction(out long cost)
+    {
+        cost = GetOfflineProductionUpgradeCost();
+
+        if (Stats.OfflineProductionLevel >= Stats.MaxOfflineProductionLevel)
+            return false;
+
+        if (!Stats.TrySpendEnergy(cost))
+            return false;
+
+        return Stats.TryUpgradeOfflineProduction();
+    }
+
+    public double GetSpawnIntervalSeconds()
+    {
+        var interval = BaseSpawnIntervalSeconds - (Stats.FasterCoresLevel * FasterCoresReductionPerLevel);
+        return Math.Max(MinSpawnIntervalSeconds, interval);
+    }
+
+    public int GetBaseSpawnTier()
+    {
+        return 1 + Stats.BetterCoresLevel;
+    }
+
+    public double GetExtraTierChance()
+    {
+        return Stats.BetterCores2Level / 100d;
+    }
+
+    public double GetOfflineProductionMultiplier()
+    {
+        return 1d + (Stats.OfflineProductionLevel / 100d);
+    }
+
+    private int GetNextSpawnTier()
+    {
+        var tier = GetBaseSpawnTier();
+
+        if (Random.Shared.NextDouble() < GetExtraTierChance())
+            tier++;
+
+        return tier;
+    }
+
     // -------------------------
     // CORE SYSTEM
     // -------------------------
 
     public bool TrySpawnCore()
     {
-        return Board.TrySpawnTier1Core(out _);
+        var nextTier = GetNextSpawnTier();
+        return Board.TrySpawnCore(nextTier, out _);
     }
 
     public bool TryMergeCores(Guid firstCoreId, Guid secondCoreId, out long xpGained)
@@ -152,12 +260,15 @@ public sealed class Player : Entity<PlayerId>
 
         if (cappedSeconds > 0 && productionPerSecond > 0)
         {
-            var energyEarned = (long)cappedSeconds * productionPerSecond;
+            var multiplier = GetOfflineProductionMultiplier();
+            var energyEarned = (long)Math.Floor(cappedSeconds * productionPerSecond * multiplier);
 
-            Stats.AddEnergy(energyEarned);
-
-            _pendingOfflineEnergy = energyEarned;
-            _pendingOfflineSeconds = cappedSeconds;
+            if (energyEarned > 0)
+            {
+                Stats.AddEnergy(energyEarned);
+                _pendingOfflineEnergy = energyEarned;
+                _pendingOfflineSeconds = cappedSeconds;
+            }
         }
 
         LastActiveUtc = nowUtc;

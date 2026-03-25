@@ -156,6 +156,26 @@ public sealed class PlayerService
                 newLevel = player.Stats.OfflineCapLevel;
                 break;
 
+            case "faster_cores":
+                success = player.TryUpgradeFasterCores(out cost);
+                newLevel = player.Stats.FasterCoresLevel;
+                break;
+
+            case "better_cores":
+                success = player.TryUpgradeBetterCores(out cost);
+                newLevel = player.Stats.BetterCoresLevel;
+                break;
+
+            case "better_cores_2":
+                success = player.TryUpgradeBetterCores2(out cost);
+                newLevel = player.Stats.BetterCores2Level;
+                break;
+
+            case "offline_production":
+                success = player.TryUpgradeOfflineProduction(out cost);
+                newLevel = player.Stats.OfflineProductionLevel;
+                break;
+
             default:
                 return Result<UpgradePurchaseResult>.Fail(Errors.InvalidUpgradeKey);
         }

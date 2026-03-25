@@ -31,6 +31,12 @@ public static class PlayerMappings
             p.Stats.StellarEnergy,
             p.Stats.StormEnergy,
 
+            p.Stats.FasterCoresLevel,
+            p.Stats.BetterCoresLevel,
+            p.Stats.BetterCores2Level,
+            p.Stats.OfflineProductionLevel,
+            p.GetSpawnIntervalSeconds(),
+
             p.Board.SlotCount,
             cores,
 

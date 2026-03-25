@@ -23,6 +23,9 @@ public sealed class CoreInstance
         SlotIndex = slotIndex;
     }
 
+    public static CoreInstance Create(int tier, int slotIndex)
+        => new(Guid.NewGuid(), tier, slotIndex);
+
     public static CoreInstance CreateTier1(int slotIndex)
         => new(Guid.NewGuid(), 1, slotIndex);
 

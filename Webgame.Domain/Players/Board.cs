@@ -40,13 +40,21 @@ public sealed class Board
 
     public bool TrySpawnTier1Core(out CoreInstance? spawnedCore)
     {
+        return TrySpawnCore(1, out spawnedCore);
+    }
+
+    public bool TrySpawnCore(int tier, out CoreInstance? spawnedCore)
+    {
         spawnedCore = null;
+
+        if (tier < 1)
+            return false;
 
         var freeSlot = GetFirstFreeSlot();
         if (freeSlot is null)
             return false;
 
-        spawnedCore = CoreInstance.CreateTier1(freeSlot.Value);
+        spawnedCore = CoreInstance.Create(tier, freeSlot.Value);
         _cores.Add(spawnedCore);
         return true;
     }

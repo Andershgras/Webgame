@@ -15,6 +15,12 @@ public sealed record PlayerResponse(
     long StellarEnergy,
     long StormEnergy,
 
+    int FasterCoresLevel,
+    int BetterCoresLevel,
+    int BetterCores2Level,
+    int OfflineProductionLevel,
+    double SpawnIntervalSeconds,
+
     int BoardSlotCount,
     IReadOnlyList<CoreDto> Cores,
 
@@ -32,4 +38,4 @@ public sealed record CoreDto(
     int Tier,
     int SlotIndex,
     long ProductionPerSecond
-);
+);  

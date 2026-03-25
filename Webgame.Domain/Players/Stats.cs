@@ -4,6 +4,11 @@ namespace Webgame.Domain.Players;
 
 public sealed class Stats
 {
+    public const int MaxFasterCoresLevel = 40;
+    public const int MaxBetterCoresLevel = 8;
+    public const int MaxBetterCores2Level = 75;
+    public const int MaxOfflineProductionLevel = 40;
+
     // EF Core
     public Stats() { }
 
@@ -19,6 +24,12 @@ public sealed class Stats
     public long StellarEnergy { get; private set; } = 0;
     public long StormEnergy { get; private set; } = 0;
 
+    // Run-based upgrades
+    public int FasterCoresLevel { get; private set; } = 0;
+    public int BetterCoresLevel { get; private set; } = 0;
+    public int BetterCores2Level { get; private set; } = 0;
+    public int OfflineProductionLevel { get; private set; } = 0;
+
     // Offline progress
     public int OfflineCapLevel { get; private set; } = 0;
     public int OfflineCapSeconds => 3600 + (OfflineCapLevel * 1800);
@@ -31,6 +42,42 @@ public sealed class Stats
     public void UpgradeOfflineCap()
     {
         OfflineCapLevel++;
+    }
+
+    public bool TryUpgradeFasterCores()
+    {
+        if (FasterCoresLevel >= MaxFasterCoresLevel)
+            return false;
+
+        FasterCoresLevel++;
+        return true;
+    }
+
+    public bool TryUpgradeBetterCores()
+    {
+        if (BetterCoresLevel >= MaxBetterCoresLevel)
+            return false;
+
+        BetterCoresLevel++;
+        return true;
+    }
+
+    public bool TryUpgradeBetterCores2()
+    {
+        if (BetterCores2Level >= MaxBetterCores2Level)
+            return false;
+
+        BetterCores2Level++;
+        return true;
+    }
+
+    public bool TryUpgradeOfflineProduction()
+    {
+        if (OfflineProductionLevel >= MaxOfflineProductionLevel)
+            return false;
+
+        OfflineProductionLevel++;
+        return true;
     }
 
     public void RegisterMerge(long xpGained, long stormEnergyReward = 0)
