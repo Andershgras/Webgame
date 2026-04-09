@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Webgame.Api.Auth;
@@ -26,7 +26,6 @@ public sealed class PlayersController : ControllerBase
 
     public sealed record CreatePlayerRequest(string Name, string Password);
     public sealed record LoginRequest(string Name, string Password);
-    public sealed record MergeCoresRequest(Guid FirstCoreId, Guid SecondCoreId);
 
     [AllowAnonymous]
     [HttpPost]
@@ -75,60 +74,6 @@ public sealed class PlayersController : ControllerBase
             return Unauthorized();
 
         var result = await _service.GetPlayerAsync(playerId.Value, ct);
-
-        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
-            this,
-            result,
-            PlayerMappings.ToResponse,
-            dto => Ok(dto));
-    }
-
-    [HttpPost("me/tick")]
-    public async Task<ActionResult<PlayerResponse>> Tick(CancellationToken ct)
-    {
-        var playerId = GetPlayerIdFromToken();
-        if (playerId is null)
-            return Unauthorized();
-
-        var result = await _service.TickAsync(playerId.Value, ct);
-
-        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
-            this,
-            result,
-            PlayerMappings.ToResponse,
-            dto => Ok(dto));
-    }
-
-    [HttpPost("me/cores/spawn")]
-    public async Task<ActionResult<PlayerResponse>> SpawnCore(CancellationToken ct)
-    {
-        var playerId = GetPlayerIdFromToken();
-        if (playerId is null)
-            return Unauthorized();
-
-        var result = await _service.SpawnCoreAsync(playerId.Value, ct);
-
-        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
-            this,
-            result,
-            PlayerMappings.ToResponse,
-            dto => Ok(dto));
-    }
-
-    [HttpPost("me/cores/merge")]
-    public async Task<ActionResult<PlayerResponse>> MergeCores(
-        [FromBody] MergeCoresRequest request,
-        CancellationToken ct)
-    {
-        var playerId = GetPlayerIdFromToken();
-        if (playerId is null)
-            return Unauthorized();
-
-        var result = await _service.MergeCoresAsync(
-            playerId.Value,
-            request.FirstCoreId,
-            request.SecondCoreId,
-            ct);
 
         return ResultToHttp.ToActionResult<Player, PlayerResponse>(
             this,

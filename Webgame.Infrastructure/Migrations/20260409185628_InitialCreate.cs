@@ -17,14 +17,18 @@ namespace Webgame.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Level = table.Column<int>(type: "int", nullable: false),
-                    Coins = table.Column<long>(type: "bigint", nullable: false),
-                    ClickPower = table.Column<int>(type: "int", nullable: false)
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Players", x => x.Id);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Players_Name",
+                table: "Players",
+                column: "Name",
+                unique: true);
         }
 
         /// <inheritdoc />

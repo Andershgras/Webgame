@@ -1,4 +1,4 @@
-﻿@page "/profile"
+@page "/profile"
 @using System.Net
 @using Webgame.Blazor.Api
 @using Webgame.Blazor.State
@@ -17,54 +17,18 @@
 }
 else if (_player is null)
 {
-    <p>No player loaded.</p>
+    <p>Not logged in.</p>
 }
 else
 {
     <p><b>Name:</b> @_player.Name</p>
-    <p><b>Level:</b> @_player.Level</p>
 
-    <h4>Energy</h4>
-    <p><b>Energy:</b> @_player.Energy</p>
-    <p><b>Stellar Energy:</b> @_player.StellarEnergy</p>
-    <p><b>Storm Energy:</b> @_player.StormEnergy</p>
-
-    <h4>Board</h4>
-    <p><b>Board Slots:</b> @_player.BoardSlotCount</p>
-    <p><b>Owned Cores:</b> @_player.Cores.Count</p>
-    <p><b>Total Production / Second:</b> @GetTotalBoardProduction()</p>
-
-    @if (_player.Cores.Count > 0)
-    {
-        <div style="margin-bottom:16px;">
-            @foreach (var core in _player.Cores.OrderBy(c => c.SlotIndex))
-            {
-                <div style="padding:8px; border:1px solid #ddd; margin-bottom:8px; border-radius:8px;">
-                    <b>Slot @core.SlotIndex</b> - Tier @core.Tier
-                    <div style="opacity:0.8;">+@core.ProductionPerSecond energy/sec</div>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
-        <p>No cores yet.</p>
-    }
-
-    <h4>Progression</h4>
-    <p><b>Offline Cap:</b> @(_player.OfflineCapSeconds / 60) min</p>
-
-    <h4>Lifetime Stats</h4>
-    <p><b>Total Energy Earned:</b> @_player.TotalEnergyEarned</p>
-    <p><b>Total Energy Spent:</b> @_player.TotalEnergySpent</p>
-    <p><b>Total Merges:</b> @_player.TotalMerges</p>
-
-    <button @onclick="Logout">Logout</button>
+    <button @onclick="Logout" style="margin-top:12px;">Logout</button>
 }
 
 @if (!string.IsNullOrWhiteSpace(_error))
 {
-    <div style="border:1px solid #f00; padding:12px; margin-bottom:12px;">
+    <div style="border:1px solid #f00; padding:12px; margin-top:12px;">
         <b>Error:</b> @_error
     </div>
 }
@@ -100,11 +64,6 @@ else
         {
             _loading = false;
         }
-    }
-
-    private long GetTotalBoardProduction()
-    {
-        return _player?.Cores.Sum(c => c.ProductionPerSecond) ?? 0;
     }
 
     private async Task Logout()

@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @implements IDisposable
 @inject NavigationManager Nav
 @inject Webgame.Blazor.State.PlayerUiState PlayerUiState
@@ -7,12 +7,7 @@
     <div>
         <button @onclick='() => NavigateTo("/")'
                 style='@GetButtonStyle("/")'>
-            Hjem
-        </button>
-
-        <button @onclick='() => NavigateTo("/leaderboard")'
-                style='@GetButtonStyle("/leaderboard")'>
-            Leaderboard
+            Home
         </button>
 
         <button @onclick='() => NavigateTo("/profile")'
@@ -23,24 +18,8 @@
 
     @if (PlayerUiState.Player is not null)
     {
-        var player = PlayerUiState.Player;
-        var xpPercent = GetXpPercent(player.Experience, player.ExperienceToNextLevel);
-
-        <div style="min-width:320px; max-width:420px; width:100%;">
-            <div style="display:flex; justify-content:flex-end; gap:15px; margin-bottom:6px; flex-wrap:wrap;">
-                <span><b>User:</b> @player.Name</span>
-                <span><b>Coins:</b> @player.Energy</span>
-                <span><b>Level:</b> @player.Level</span>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:4px;">
-                <span><b>XP</b></span>
-                <span>@player.Experience / @player.ExperienceToNextLevel</span>
-            </div>
-
-            <div style="width:100%; height:16px; background:#e5e5e5; border:1px solid #bbb; border-radius:999px; overflow:hidden;">
-                <div style="height:100%; width:@xpPercent%; background:#6aa9ff; transition:width 0.25s ease;"></div>
-            </div>
+        <div>
+            <span><b>User:</b> @PlayerUiState.Player.Name</span>
         </div>
     }
 </div>
@@ -81,15 +60,6 @@
         return isActive
             ? "margin-right:10px; font-weight:bold; background-color:#ddd;"
             : "margin-right:10px;";
-    }
-
-    private static int GetXpPercent(long currentXp, long xpToNextLevel)
-    {
-        if (xpToNextLevel <= 0)
-            return 0;
-
-        var raw = (double)currentXp / xpToNextLevel * 100d;
-        return (int)Math.Clamp(raw, 0d, 100d);
     }
 
     public void Dispose()

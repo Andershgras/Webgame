@@ -5,14 +5,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Webgame.Api.Auth;
 using Webgame.Api.Common;
-using Webgame.Application.Leaderboards;
 using Webgame.Application.Persistence;
 using Webgame.Application.Players;
-using Webgame.Application.Upgrades;
-using Webgame.Infrastructure.Leaderboards;
 using Webgame.Infrastructure.Persistence;
 using Webgame.Infrastructure.Players;
-using Webgame.Infrastructure.Upgrades;
 
 namespace Webgame.Api
 {
@@ -117,8 +113,6 @@ namespace Webgame.Api
             // Infrastructure
             builder.Services.AddScoped<IPlayerRepository, EfPlayerRepository>();
             builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
-            builder.Services.AddScoped<ILeaderboardQuery, EfLeaderboardQuery>();
-            builder.Services.AddScoped<IUpgradeCatalogQuery, EfUpgradeCatalogQuery>();
 
             // Persistence
             builder.Services.AddDbContext<WebgameDbContext>(options =>

@@ -1,9 +1,7 @@
-﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Webgame.Application.Common;
 using Webgame.Application.Persistence;
-using Webgame.Application.Upgrades;
 using Webgame.Domain.Players;
 
 namespace Webgame.Application.Players;
@@ -53,10 +51,6 @@ public sealed class PlayerService
         if (!isValidPassword)
             return Result<Player>.Fail(Errors.InvalidCredentials);
 
-        player.Touch();
-        _repo.Update(player);
-        await _uow.SaveChangesAsync(ct);
-
         return Result<Player>.Ok(player);
     }
 
@@ -65,62 +59,6 @@ public sealed class PlayerService
         var player = await _repo.GetByIdAsync(id, ct);
         if (player is null)
             return Result<Player>.Fail(Errors.PlayerNotFound);
-
-        player.CalculateOfflineProgress(DateTime.UtcNow);
-
-        _repo.Update(player);
-        await _uow.SaveChangesAsync(ct);
-
-        return Result<Player>.Ok(player);
-    }
-
-    public async Task<Result<Player>> TickAsync(PlayerId id, CancellationToken ct)
-    {
-        var player = await _repo.GetByIdAsync(id, ct);
-        if (player is null)
-            return Result<Player>.Fail(Errors.PlayerNotFound);
-
-        player.Tick();
-        player.Touch();
-
-        _repo.Update(player);
-        await _uow.SaveChangesAsync(ct);
-
-        return Result<Player>.Ok(player);
-    }
-
-    public async Task<Result<Player>> SpawnCoreAsync(PlayerId id, CancellationToken ct)
-    {
-        var player = await _repo.GetByIdAsync(id, ct);
-        if (player is null)
-            return Result<Player>.Fail(Errors.PlayerNotFound);
-
-        var success = player.TrySpawnCore(out _);
-        if (!success)
-            return Result<Player>.Fail(Errors.BoardIsFull);
-
-        player.Touch();
-
-        _repo.Update(player);
-        await _uow.SaveChangesAsync(ct);
-
-        return Result<Player>.Ok(player);
-    }
-
-    public async Task<Result<Player>> MergeCoresAsync(PlayerId id, Guid firstCoreId, Guid secondCoreId, CancellationToken ct)
-    {
-        var player = await _repo.GetByIdAsync(id, ct);
-        if (player is null)
-            return Result<Player>.Fail(Errors.PlayerNotFound);
-
-        var success = player.TryMergeCores(firstCoreId, secondCoreId, out _, out _);
-        if (!success)
-            return Result<Player>.Fail(Errors.InvalidMerge);
-
-        player.Touch();
-
-        _repo.Update(player);
-        await _uow.SaveChangesAsync(ct);
 
         return Result<Player>.Ok(player);
     }
@@ -135,76 +73,5 @@ public sealed class PlayerService
         await _uow.SaveChangesAsync(ct);
 
         return Result.Ok();
-    }
-
-    public async Task<Result<UpgradePurchaseResult>> BuyUpgradeAsync(PlayerId id, string key, CancellationToken ct)
-    {
-        var player = await _repo.GetByIdAsync(id, ct);
-        if (player is null)
-            return Result<UpgradePurchaseResult>.Fail(Errors.PlayerNotFound);
-
-        key = (key ?? "").Trim().ToLowerInvariant();
-
-        bool success;
-        long cost;
-        int newLevel;
-
-        switch (key)
-        {
-            case "offline_cap":
-                success = player.TryUpgradeOfflineCap(out cost);
-                newLevel = player.Stats.OfflineCapLevel;
-                break;
-
-            case "faster_cores":
-                success = player.TryUpgradeFasterCores(out cost);
-                newLevel = player.Stats.FasterCoresLevel;
-                break;
-
-            case "better_cores":
-                success = player.TryUpgradeBetterCores(out cost);
-                newLevel = player.Stats.BetterCoresLevel;
-                break;
-
-            case "better_cores_2":
-                success = player.TryUpgradeBetterCores2(out cost);
-                newLevel = player.Stats.BetterCores2Level;
-                break;
-
-            case "offline_production":
-                success = player.TryUpgradeOfflineProduction(out cost);
-                newLevel = player.Stats.OfflineProductionLevel;
-                break;
-
-            case "more_stellar_energy":
-                success = player.TryUpgradeMoreStellarEnergy(out cost);
-                newLevel = player.Stats.MoreStellarEnergyLevel;
-                break;
-
-            case "faster_level_up":
-                success = player.TryUpgradeFasterLevelUp(out cost);
-                newLevel = player.Stats.FasterLevelUpLevel;
-                break;
-
-            case "stellar_more_stellar_energy":
-                success = player.TryUpgradeStellarMoreStellarEnergy(out cost);
-                newLevel = player.Stats.StellarMoreStellarEnergyLevel;
-                break;
-
-            default:
-                return Result<UpgradePurchaseResult>.Fail(Errors.InvalidUpgradeKey);
-        }
-
-        if (!success)
-            return Result<UpgradePurchaseResult>.Fail(Errors.NotEnoughCoins);
-
-        player.Touch();
-
-        _repo.Update(player);
-        await _uow.SaveChangesAsync(ct);
-
-        return Result<UpgradePurchaseResult>.Ok(
-            new UpgradePurchaseResult(key, cost, newLevel, player)
-        );
     }
 }
