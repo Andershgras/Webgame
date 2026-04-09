@@ -30,6 +30,12 @@ public sealed class ApiClient
         return await ReadOrThrowAsync<PlayerResponse>(res);
     }
 
+    public async Task<PlayerResponse> UnlockFirstGameAsync()
+    {
+        var res = await _http.PostAsync("api/players/me/unlock-first-game", null);
+        return await ReadOrThrowAsync<PlayerResponse>(res);
+    }
+
     public async Task DeleteAsync()
     {
         var res = await _http.DeleteAsync("api/players/me");

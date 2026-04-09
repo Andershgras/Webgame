@@ -82,6 +82,22 @@ public sealed class PlayersController : ControllerBase
             dto => Ok(dto));
     }
 
+    [HttpPost("me/unlock-first-game")]
+    public async Task<ActionResult<PlayerResponse>> UnlockFirstGame(CancellationToken ct)
+    {
+        var playerId = GetPlayerIdFromToken();
+        if (playerId is null)
+            return Unauthorized();
+
+        var result = await _service.UnlockFirstGameAsync(playerId.Value, ct);
+
+        return ResultToHttp.ToActionResult<Player, PlayerResponse>(
+            this,
+            result,
+            PlayerMappings.ToResponse,
+            dto => Ok(dto));
+    }
+
     [HttpDelete("me")]
     public async Task<IActionResult> Delete(CancellationToken ct)
     {

@@ -6,16 +6,23 @@ public sealed class Stats
     {
     }
 
-    public Stats(int currency)
+    public Stats(int currency, bool hasUnlockedFirstGame = false)
     {
         Currency = ValidateCurrency(currency);
+        HasUnlockedFirstGame = hasUnlockedFirstGame;
     }
 
     public int Currency { get; private set; }
+    public bool HasUnlockedFirstGame { get; private set; }
 
     public void SetCurrency(int currency)
     {
         Currency = ValidateCurrency(currency);
+    }
+
+    public void UnlockFirstGame()
+    {
+        HasUnlockedFirstGame = true;
     }
 
     private static int ValidateCurrency(int currency)

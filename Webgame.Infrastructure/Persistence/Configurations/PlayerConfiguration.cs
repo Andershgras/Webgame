@@ -33,6 +33,11 @@ public sealed class PlayerConfiguration : IEntityTypeConfiguration<Player>
                 .HasColumnName("Currency")
                 .HasDefaultValue(0)
                 .IsRequired();
+
+            stats.Property(s => s.HasUnlockedFirstGame)
+                .HasColumnName("HasUnlockedFirstGame")
+                .HasDefaultValue(false)
+                .IsRequired();
         });
     }
 }

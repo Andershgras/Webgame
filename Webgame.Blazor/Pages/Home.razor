@@ -36,6 +36,18 @@ else
 {
     <h3>Welcome, @_player.Name!</h3>
 
+    @if (!_player.HasUnlockedFirstGame)
+    {
+        <button @onclick="StartFirstGame" style="margin-top:12px;">Start - First Game</button>
+    }
+
+    @if (_player.HasUnlockedFirstGame)
+    {
+        <div style="margin-top:16px; border:1px solid #ccc; padding:12px;">
+            <h4>Game #1</h4>
+        </div>
+    }
+
     <button @onclick="Logout" style="margin-top:12px;">Logout</button>
 }
 
@@ -152,6 +164,21 @@ else
         PlayerUiState.Clear();
         _playerName = "";
         _password = "";
+    }
+
+    private async Task StartFirstGame()
+    {
+        ClearError();
+
+        try
+        {
+            _player = await Api.UnlockFirstGameAsync();
+            PlayerUiState.SetPlayer(_player);
+        }
+        catch (Exception ex)
+        {
+            await HandleError(ex);
+        }
     }
 
     private bool ValidateCredentials()

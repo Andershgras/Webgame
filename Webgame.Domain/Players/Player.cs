@@ -53,6 +53,11 @@ public sealed class Player : Entity<PlayerId>
         Stats.SetCurrency(currency);
     }
 
+    public void UnlockFirstGame()
+    {
+        Stats.UnlockFirstGame();
+    }
+
     private static string ValidateName(string name)
     {
         name = (name ?? "").Trim();

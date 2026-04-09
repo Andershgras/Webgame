@@ -63,6 +63,19 @@ public sealed class PlayerService
         return Result<Player>.Ok(player);
     }
 
+    public async Task<Result<Player>> UnlockFirstGameAsync(PlayerId id, CancellationToken ct)
+    {
+        var player = await _repo.GetByIdAsync(id, ct);
+        if (player is null)
+            return Result<Player>.Fail(Errors.PlayerNotFound);
+
+        player.UnlockFirstGame();
+        _repo.Update(player);
+        await _uow.SaveChangesAsync(ct);
+
+        return Result<Player>.Ok(player);
+    }
+
     public async Task<Result> DeletePlayerAsync(PlayerId id, CancellationToken ct)
     {
         var player = await _repo.GetByIdAsync(id, ct);
