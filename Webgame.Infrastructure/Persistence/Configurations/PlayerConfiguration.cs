@@ -26,5 +26,13 @@ public sealed class PlayerConfiguration : IEntityTypeConfiguration<Player>
 
         builder.Property(p => p.PasswordHash)
             .IsRequired();
+
+        builder.OwnsOne(p => p.Stats, stats =>
+        {
+            stats.Property(s => s.Currency)
+                .HasColumnName("Currency")
+                .HasDefaultValue(0)
+                .IsRequired();
+        });
     }
 }
