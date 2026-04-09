@@ -43,12 +43,15 @@ else
 
     @if (_player.HasUnlockedFirstGame)
     {
-        <div style="margin-top:16px; border:1px solid #ccc; padding:12px;">
-            <h4>Game #1</h4>
-        </div>
+        @foreach (var game in _player.Games)
+        {
+            <div style="margin-top:16px; border:1px solid #ccc; padding:12px;">
+                <h4>@game.Name</h4>
+                <p><b>Players:</b> @game.Players</p>
+                <p><b>Revenue:</b> @game.Revenue</p>
+            </div>
+        }
     }
-
-    <button @onclick="Logout" style="margin-top:12px;">Logout</button>
 }
 
 @if (!string.IsNullOrWhiteSpace(_error))

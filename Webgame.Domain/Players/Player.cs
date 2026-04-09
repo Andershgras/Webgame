@@ -10,6 +10,7 @@ public sealed class Player : Entity<PlayerId>
     public string Name { get; private set; } = null!;
     public string PasswordHash { get; private set; } = null!;
     public Stats Stats { get; private set; } = new(0);
+    public List<PlayerGame> Games { get; private set; } = [];
 
     public Player(PlayerId id, string name, string passwordHash) : base(id)
     {
@@ -55,6 +56,11 @@ public sealed class Player : Entity<PlayerId>
 
     public void UnlockFirstGame()
     {
+        if (!Stats.HasUnlockedFirstGame)
+        {
+            Games.Add(PlayerGame.CreateFirstGame());
+        }
+
         Stats.UnlockFirstGame();
     }
 

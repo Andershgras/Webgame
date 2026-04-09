@@ -6,5 +6,6 @@ public sealed record PlayerResponse(
     Guid Id,
     string Name,
     int Currency,
-    bool HasUnlockedFirstGame
+    bool HasUnlockedFirstGame,
+    IReadOnlyList<PlayerGameResponse> Games
 );

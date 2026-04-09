@@ -39,5 +39,29 @@ public sealed class PlayerConfiguration : IEntityTypeConfiguration<Player>
                 .HasDefaultValue(false)
                 .IsRequired();
         });
+
+        builder.OwnsMany(p => p.Games, game =>
+        {
+            game.ToTable("PlayerGames");
+
+            game.WithOwner().HasForeignKey("PlayerId");
+
+            game.HasKey(g => g.Id);
+
+            game.Property(g => g.Id)
+                .ValueGeneratedNever();
+
+            game.Property(g => g.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            game.Property(g => g.Players)
+                .IsRequired();
+
+            game.Property(g => g.Revenue)
+                .IsRequired();
+        });
+
+        builder.Navigation(p => p.Games).AutoInclude();
     }
 }
