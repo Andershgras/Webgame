@@ -6,32 +6,29 @@ public sealed class PlayerGame
     {
     }
 
-    public PlayerGame(Guid id, string name, int players, int revenue)
+    public PlayerGame(Guid id, string gameKey, int players, int revenue)
     {
         Id = id;
-        Name = ValidateName(name);
+        GameKey = ValidateGameKey(gameKey);
         Players = ValidateResource(players, nameof(players));
         Revenue = ValidateResource(revenue, nameof(revenue));
     }
 
     public Guid Id { get; private set; }
-    public string Name { get; private set; } = null!;
+    public string GameKey { get; private set; } = null!;
+    public string Name => GameDefinitions.Get(GameKey).Name;
     public int Players { get; private set; }
     public int Revenue { get; private set; }
 
-    public static PlayerGame CreateFirstGame()
+    public static PlayerGame Create(string gameKey)
     {
-        return new PlayerGame(Guid.NewGuid(), "Game #1", 0, 0);
+        var definition = GameDefinitions.Get(gameKey);
+        return new PlayerGame(Guid.NewGuid(), definition.Key, definition.StartingPlayers, definition.StartingRevenue);
     }
 
-    private static string ValidateName(string name)
+    private static string ValidateGameKey(string gameKey)
     {
-        name = (name ?? "").Trim();
-
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Game name is required.", nameof(name));
-
-        return name;
+        return GameDefinitions.Get(gameKey).Key;
     }
 
     private static int ValidateResource(int value, string paramName)

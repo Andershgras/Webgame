@@ -51,8 +51,8 @@ public sealed class PlayerConfiguration : IEntityTypeConfiguration<Player>
             game.Property(g => g.Id)
                 .ValueGeneratedNever();
 
-            game.Property(g => g.Name)
-                .HasMaxLength(100)
+            game.Property(g => g.GameKey)
+                .HasMaxLength(50)
                 .IsRequired();
 
             game.Property(g => g.Players)

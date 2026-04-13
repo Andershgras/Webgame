@@ -58,7 +58,7 @@ public sealed class Player : Entity<PlayerId>
     {
         if (!Stats.HasUnlockedFirstGame)
         {
-            Games.Add(PlayerGame.CreateFirstGame());
+            Games.Add(PlayerGame.Create(GameDefinitions.FirstGameKey));
         }
 
         Stats.UnlockFirstGame();

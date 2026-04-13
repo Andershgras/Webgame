@@ -13,7 +13,7 @@ public static class PlayerMappings
             p.Stats.Currency,
             p.Stats.HasUnlockedFirstGame,
             p.Games
-                .Select(g => new PlayerGameResponse(g.Id, g.Name, g.Players, g.Revenue))
+                .Select(g => new PlayerGameResponse(g.Id, g.GameKey, g.Name, g.Players, g.Revenue))
                 .ToList());
     }
 }
